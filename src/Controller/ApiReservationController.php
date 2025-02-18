@@ -37,6 +37,10 @@ final class ApiReservationController extends AbstractController
             return new JsonResponse(['error' => 'Invalid user or trip IDs'], JsonResponse::HTTP_BAD_REQUEST);
         }
 
+        if ($trajet->getPlacesRestantes() <= 0) {
+            return new JsonResponse(['message' => 'Réservation impossible (plus de place)', 'status' => 'NOK'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
         $reservation = new Reservation();
         $reservation->setUtilisateur($utilisateur);
         $reservation->setTrajet($trajet);
@@ -45,14 +49,18 @@ final class ApiReservationController extends AbstractController
 
         $errors = $validator->validate($reservation);
         if (count($errors) > 0) {
-            return new JsonResponse(['error' => (string) $errors], JsonResponse::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => (string) $errors, 'status' => 'NOK'], JsonResponse::HTTP_BAD_REQUEST);
         }
 
+        $trajet->setPlacesRestantes($trajet->getPlacesRestantes() - 1);
+
         $entityManager->persist($reservation);
+        $entityManager->persist($trajet);
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Réservation créée avec succès'], JsonResponse::HTTP_CREATED);
+        return new JsonResponse(['message' => 'Réservation effectuée', 'status' => 'OK'], JsonResponse::HTTP_CREATED);
     }
+
     #[Route('/api/reservation/{id}/confirmer', name: 'confirmer_reservation', methods: ['PUT'])]
     public function confirmerReservation(int $id, ReservationRepository $reservationRepo, EntityManagerInterface $entityManager): JsonResponse
     {
@@ -68,12 +76,12 @@ final class ApiReservationController extends AbstractController
         }
 
         $reservation->setStatut(ReservationStatut::CONFIRMEE);
-
         $entityManager->persist($reservation);
         $entityManager->flush();
 
         return new JsonResponse(['message' => 'Réservation confirmée avec succès'], JsonResponse::HTTP_OK);
     }
+
     #[Route('/api/reservation/{id}/annuler', name: 'annuler_reservation', methods: ['PUT'])]
     public function annulerReservation(int $id, ReservationRepository $reservationRepo, EntityManagerInterface $entityManager): JsonResponse
     {
@@ -88,8 +96,12 @@ final class ApiReservationController extends AbstractController
             return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
         }
 
+        $trajet = $reservation->getTrajet();
+        $trajet->setPlacesRestantes($trajet->getPlacesRestantes() + 1);
+
         $reservation->setStatut(ReservationStatut::ANNULEE);
 
+        $entityManager->persist($trajet);
         $entityManager->persist($reservation);
         $entityManager->flush();
 

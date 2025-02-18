@@ -16,28 +16,16 @@ class TrajetRepository extends ServiceEntityRepository
         parent::__construct($registry, Trajet::class);
     }
 
-    //    /**
-    //     * @return Trajet[] Returns an array of Trajet objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('t')
-    //            ->andWhere('t.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('t.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    public function searchByCriteria($villeDepartId, $villeArriveeId, $dateDepart)
+    {
+        $qb = $this->createQueryBuilder('t')
+            ->andWhere('t.villeDepart = :depart')
+            ->andWhere('t.villeArrivee = :arrivee')
+            ->andWhere('t.dateHeure = :date')
+            ->setParameter('depart', $villeDepartId)
+            ->setParameter('arrivee', $villeArriveeId)
+            ->setParameter('date', new \DateTime($dateDepart));
 
-    //    public function findOneBySomeField($value): ?Trajet
-    //    {
-    //        return $this->createQueryBuilder('t')
-    //            ->andWhere('t.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+        return $qb->getQuery()->getResult();
+    }
 }
