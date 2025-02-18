@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -23,14 +24,19 @@ class Voiture
     #[ORM\Column(name: "nb_places", type: "integer")]
     private ?int $nbPlaces = null;
 
-    #[ORM\OneToOne(targetEntity: Utilisateur::class, mappedBy: "voiture")]
+    #[ORM\OneToOne(targetEntity: Utilisateur::class, inversedBy: 'voiture')]
+    #[ORM\JoinColumn(name: "id_utilisateur", referencedColumnName: "id_utilisateur", nullable: false)]
     private ?Utilisateur $utilisateur = null;
-
 
 
     public function getIdVoiture(): ?int
     {
         return $this->idVoiture;
+    }
+    public function setIdVoiture(?int $idVoiture): self
+    {
+        $this->idVoiture = $idVoiture;
+        return $this;
     }
     public function getMarque(): ?string
     {
@@ -76,6 +82,9 @@ class Voiture
     public function setUtilisateur(?Utilisateur $utilisateur): self
     {
         $this->utilisateur = $utilisateur;
+        if ($utilisateur !== null && $utilisateur->getVoiture() !== $this) {
+            $utilisateur->setVoiture($this);
+        }
         return $this;
     }
 }

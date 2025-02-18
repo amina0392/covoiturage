@@ -27,26 +27,19 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(name: "mot_de_passe", type: "string", length: 60)]
     private ?string $motDePasse = null;
 
-
-
     #[ORM\ManyToOne(targetEntity: Role::class)]
     #[ORM\JoinColumn(name: "id_role", referencedColumnName: "id_role", nullable: false)]
     private ?Role $role = null;
-
 
     #[ORM\ManyToOne(targetEntity: Ville::class)]
     #[ORM\JoinColumn(name: "id_ville", referencedColumnName: "id_ville", nullable: false)]
     private ?Ville $ville = null;
 
-
-    #[ORM\OneToOne(targetEntity: Voiture::class, inversedBy: "utilisateur")]
-    #[ORM\JoinColumn(name: "id_voiture", referencedColumnName: "id_voiture", nullable: true, onDelete: "SET NULL")]
+    #[ORM\OneToOne(targetEntity: Voiture::class, mappedBy: 'utilisateur', cascade: ['persist', 'remove'])]
     private ?Voiture $voiture = null;
 
 
-
     // Ajout des méthodes de UserInterface
-
     public function getIdUtilisateur(): ?int
     {
         return $this->idUtilisateur;
@@ -128,6 +121,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setVoiture(?Voiture $voiture): self
     {
         $this->voiture = $voiture;
+        if ($voiture !== null && $voiture->getUtilisateur() !== $this) {
+            $voiture->setUtilisateur($this);
+        }
         return $this;
     }
 

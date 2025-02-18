@@ -3,7 +3,9 @@
 namespace App\Controller;
 
 use App\Entity\Utilisateur;
-use App\Entity\Reservation;
+use App\Entity\Voiture;
+
+use App\Repository\UtilisateurRepository;
 use App\Repository\RoleRepository;
 use App\Repository\ReservationRepository;
 use App\Repository\VilleRepository;
@@ -18,8 +20,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class ApiUtilisateurController extends AbstractController
 {
-    #[Route('/api/utilisateur', name: 'create_utilisateur', methods: ['POST'])]
-    public function createUtilisateur(
+    #[Route('/api/utilisateur', name: 'inscription_utilisateur', methods: ['POST'])]
+    public function inscriptionUtilisateur(
         Request $request,
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher,
@@ -27,57 +29,95 @@ final class ApiUtilisateurController extends AbstractController
         VilleRepository $villeRepo
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
-
+    
         $user = new Utilisateur();
         $user->setNom($data['nom']);
         $user->setPrenom($data['prenom']);
         $user->setEmail($data['email']);
         $user->setPassword($passwordHasher->hashPassword($user, $data['motDePasse']));
-        
+    
         $role = $roleRepo->find($data['idRole']);
         $ville = $villeRepo->find($data['idVille']);
-        
+    
         $user->setRoleEntity($role);
         $user->setVille($ville);
-
-        $entityManager->persist($user);
-        $entityManager->flush();
-
-        return new JsonResponse(['message' => 'Utilisateur créé avec succès'], Response::HTTP_CREATED);
-    }
-
-    #[Route('/api/utilisateur', name: 'liste_utilisateurs', methods: ['GET'])]
-    public function listeUtilisateurs(ReservationRepository $reservationRepo): JsonResponse {
-        $reservations = $reservationRepo->findAll();
-        $data = [];
-        foreach ($reservations as $reservation) { 
-            $data[] = [
-                'id' => $reservation->getIdReservation(),
-                'utilisateur' => $reservation->getUtilisateur()->getNom().' '.$reservation->getUtilisateur()->getPrenom(),
-                'trajet' => $reservation->getTrajet()->getIdTrajet(),
-                'statut' => $reservation->getStatut()->value,
-                'date_reservation' => $reservation->getDateReservation()->format('Y-m-d H:i:s')
-            ];
+    
+        if (isset($data['voiture'])) {
+            $voitureData = $data['voiture'];
+            $voiture = new Voiture();
+            $voiture->setMarque($voitureData['marque']);
+            $voiture->setModele($voitureData['modele']);
+            $voiture->setImmatriculation($voitureData['immatriculation']);
+            $voiture->setNbPlaces($voitureData['nb_places']);
+    
+            // Associe voiture et utilisateur dans les deux sens
+            $voiture->setUtilisateur($user);
+            $user->setVoiture($voiture);
+    
+            $entityManager->persist($voiture);
         }
-        return new JsonResponse($data);
+    
+        $entityManager->persist($user);
+        $entityManager->flush(); // Un seul flush après toutes les opérations
+    
+        return new JsonResponse(['message' => 'Utilisateur et voiture créés avec succès'], Response::HTTP_CREATED);
+    }
+    
+
+    #[Route('/api/utilisateurs', name: 'liste_utilisateurs', methods: ['GET'])]
+public function listeUtilisateurs(UtilisateurRepository $utilisateurRepo): JsonResponse
+{
+    $currentUser = $this->getUser();
+
+    if (!$currentUser || !in_array('ROLE_ADMIN', $currentUser->getRoles())) {
+        return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
     }
 
+    $utilisateurs = $utilisateurRepo->findAll();
+    $data = [];
 
-    #[Route('/api/conducteur/{idtrajet}/passagers', name: 'liste_passagers_conducteur', methods: ['GET'])]
-    public function listePassagersConducteur(int $idtrajet, ReservationRepository $reservationRepo): JsonResponse {
+    foreach ($utilisateurs as $user) {
+        $voiture = $user->getVoiture();
+
+        $data[] = [
+            'id' => $user->getIdUtilisateur(),
+            'nom' => $user->getNom(),
+            'prenom' => $user->getPrenom(),
+            'email' => $user->getEmail(),
+            'ville' => $user->getVille()->getNomCommune(),
+            'role' => in_array('ROLE_ADMIN', $user->getRoles()) ? 'ROLE_ADMIN' : 'ROLE_USER',
+            'voiture' => $voiture ? [
+                'id' => $voiture->getIdVoiture(),
+                'marque' => $voiture->getMarque(),
+                'modele' => $voiture->getModele(),
+                'immatriculation' => $voiture->getImmatriculation(),
+                'nb_places' => $voiture->getNbPlaces(),
+            ] : null
+        ];
+    }
+
+    return new JsonResponse($data);
+}
+
+
+
+    #[Route('/api/conducteur/{idtrajet}/passagers', name: 'liste_passagers', methods: ['GET'])]
+    public function listePassagers(int $idtrajet, ReservationRepository $reservationRepo): JsonResponse
+    {
         $reservations = $reservationRepo->findBy(['trajet' => $idtrajet]);
         $data = [];
         foreach ($reservations as $reservation) {
             $data[] = [
                 'id' => $reservation->getIdReservation(),
-                'utilisateur' => $reservation->getUtilisateur()->getNom().' '.$reservation->getUtilisateur()->getPrenom()
+                'utilisateur' => $reservation->getUtilisateur()->getNom() . ' ' . $reservation->getUtilisateur()->getPrenom()
             ];
         }
         return new JsonResponse($data);
     }
 
-    #[Route('/api/utilisateur/{idpers}/inscriptions', name: 'liste_inscriptions_user', methods: ['GET'])]
-    public function listeInscriptionsUser(int $idpers, ReservationRepository $reservationRepo): JsonResponse {
+    #[Route('/api/utilisateur/{id}/reservation', name: 'liste_reservation_utilisateur', methods: ['GET'])]
+    public function listeReservationUtilisateur(int $idpers, ReservationRepository $reservationRepo): JsonResponse
+    {
         $reservations = $reservationRepo->findBy(['utilisateur' => $idpers]);
         $data = [];
         foreach ($reservations as $reservation) {
@@ -91,17 +131,23 @@ final class ApiUtilisateurController extends AbstractController
         return new JsonResponse($data);
     }
 
-    #[Route('/api/inscription/{id}', name: 'delete_inscription', methods: ['DELETE'])]
-    public function deleteInscription(int $id, EntityManagerInterface $entityManager, ReservationRepository $reservationRepo): JsonResponse {
-        $reservation = $reservationRepo->find($id);
-        if (!$reservation) {
-            return new JsonResponse(['error' => 'Inscription non trouvée'], JsonResponse::HTTP_NOT_FOUND);
+    #[Route('/api/utilisateur/{id}', name: 'suppression_utilisateur', methods: ['DELETE'])]
+    public function deleteUtilisateur(int $id, EntityManagerInterface $entityManager, UtilisateurRepository $utilisateurRepo): JsonResponse
+    {
+        $currentUser = $this->getUser();
+
+        if (!$currentUser || !$currentUser->getRoles() || !in_array('ROLE_ADMIN', $currentUser->getRoles())) {
+            return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
         }
 
-        $entityManager->remove($reservation);
+        $utilisateur = $utilisateurRepo->find($id);
+        if (!$utilisateur) {
+            return new JsonResponse(['error' => 'Utilisateur non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $entityManager->remove($utilisateur);
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Inscription supprimée avec succès'], JsonResponse::HTTP_OK);
+        return new JsonResponse(['message' => 'Utilisateur supprimé avec succès'], JsonResponse::HTTP_OK);
     }
-
 }

@@ -22,11 +22,11 @@ class AppFixtures extends Fixture
     public function load(ObjectManager $manager): void
     {
         $roleAdmin = new Role();
-        $roleAdmin->setNomRole(RoleType::ADMIN);  // Utilisation correcte de l'énumération
+        $roleAdmin->setNomRole(RoleType::ADMIN);  
         $manager->persist($roleAdmin);
 
         $roleUser = new Role();
-        $roleUser->setNomRole(RoleType::UTILISATEUR); // Utilisation correcte de l'énumération
+        $roleUser->setNomRole(RoleType::UTILISATEUR);
         $manager->persist($roleUser);
 
         // Crée une ville

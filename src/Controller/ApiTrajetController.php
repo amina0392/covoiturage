@@ -25,11 +25,15 @@ final class ApiTrajetController extends AbstractController
         }
 
         $conducteur = $utilisateurRepo->find($data['id_utilisateur']);
+        if (!$conducteur || !$conducteur->getVoiture()) {
+            return new JsonResponse(['error' => 'Le conducteur doit posséder une voiture'], JsonResponse::HTTP_FORBIDDEN);
+        }
+
         $villeDepart = $villeRepo->find($data['id_ville_depart']);
         $villeArrivee = $villeRepo->find($data['id_ville_arrivee']);
 
-        if (!$conducteur || !$villeDepart || !$villeArrivee) {
-            return new JsonResponse(['error' => 'Entités non trouvées'], JsonResponse::HTTP_NOT_FOUND);
+        if (!$villeDepart || !$villeArrivee) {
+            return new JsonResponse(['error' => 'Villes non trouvées'], JsonResponse::HTTP_NOT_FOUND);
         }
 
         $trajet = new Trajet();
@@ -101,14 +105,67 @@ final class ApiTrajetController extends AbstractController
     public function deleteTrajet(int $id, TrajetRepository $trajetRepository, EntityManagerInterface $entityManager): JsonResponse
     {
         $trajet = $trajetRepository->find($id);
+    
+        if (!$trajet) {
+            return new JsonResponse(['error' => 'Trajet non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+        }
+    
+        // Vérification que l'utilisateur connecté est bien le créateur du trajet
+        $currentUser = $this->getUser();
+        if ($trajet->getConducteur() !== $currentUser) {
+            return new JsonResponse(['error' => 'Accès refusé : Vous n\'êtes pas le créateur de ce trajet'], JsonResponse::HTTP_FORBIDDEN);
+        }
+    
+        $entityManager->remove($trajet);
+        $entityManager->flush();
+    
+        return new JsonResponse(['message' => 'Trajet supprimé avec succès'], JsonResponse::HTTP_OK);
+    }
+
+    #[Route('/api/trajet/{id}', name: 'update_trajet', methods: ['PUT'])]
+    public function updateTrajet(int $id, Request $request, TrajetRepository $trajetRepo, EntityManagerInterface $entityManager, UtilisateurRepository $utilisateurRepo, VilleRepository $villeRepo): JsonResponse
+    {
+        $trajet = $trajetRepo->find($id);
 
         if (!$trajet) {
             return new JsonResponse(['error' => 'Trajet non trouvé'], JsonResponse::HTTP_NOT_FOUND);
         }
 
-        $entityManager->remove($trajet);
+        $data = json_decode($request->getContent(), true);
+
+        if (isset($data['id_utilisateur'])) {
+            $conducteur = $utilisateurRepo->find($data['id_utilisateur']);
+            if (!$conducteur) return new JsonResponse(['error' => 'Conducteur non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+            $trajet->setConducteur($conducteur);
+        }
+
+        if (isset($data['id_ville_depart'])) {
+            $villeDepart = $villeRepo->find($data['id_ville_depart']);
+            if (!$villeDepart) return new JsonResponse(['error' => 'Ville de départ non trouvée'], JsonResponse::HTTP_NOT_FOUND);
+            $trajet->setVilleDepart($villeDepart);
+        }
+
+        if (isset($data['id_ville_arrivee'])) {
+            $villeArrivee = $villeRepo->find($data['id_ville_arrivee']);
+            if (!$villeArrivee) return new JsonResponse(['error' => 'Ville d\'arrivée non trouvée'], JsonResponse::HTTP_NOT_FOUND);
+            $trajet->setVilleArrivee($villeArrivee);
+        }
+
+        if (isset($data['date_heure'])) {
+            $trajet->setDateHeure(new \DateTime($data['date_heure']));
+        }
+
+        if (isset($data['places_restantes'])) {
+            $trajet->setPlacesRestantes($data['places_restantes']);
+        }
+
+        if (isset($data['detail_trajet'])) {
+            $trajet->setDetailTrajet($data['detail_trajet']);
+        }
+
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Trajet supprimé avec succès'], JsonResponse::HTTP_OK);
+        return new JsonResponse(['message' => 'Trajet mis à jour avec succès'], JsonResponse::HTTP_OK);
     }
+    
 }
