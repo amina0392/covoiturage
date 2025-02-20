@@ -15,8 +15,8 @@ use Symfony\Component\Routing\Annotation\Route;
 
 final class ApiTrajetController extends AbstractController
 {
-    #[Route('/api/trajet', name: 'create_trajet', methods: ['POST'])]
-    public function createTrajet(Request $request, EntityManagerInterface $entityManager, UtilisateurRepository $utilisateurRepo, VilleRepository $villeRepo): JsonResponse
+    #[Route('/api/trajet', name: 'creation_trajet', methods: ['POST'])]
+    public function creationTrajet(Request $request, EntityManagerInterface $entityManager, UtilisateurRepository $utilisateurRepo, VilleRepository $villeRepo): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
@@ -50,8 +50,8 @@ final class ApiTrajetController extends AbstractController
         return new JsonResponse(['message' => 'Trajet créé avec succès'], JsonResponse::HTTP_CREATED);
     }
 
-    #[Route('/api/trajets', name: 'get_trajets', methods: ['GET'])]
-    public function getTrajets(TrajetRepository $trajetRepository): JsonResponse
+    #[Route('/api/trajets', name: 'liste_trajets', methods: ['GET'])]
+    public function listeTrajets(TrajetRepository $trajetRepository): JsonResponse
     {
         $trajets = $trajetRepository->findAll();
 
@@ -101,8 +101,8 @@ final class ApiTrajetController extends AbstractController
         return new JsonResponse($data);
     }
     
-    #[Route('/api/trajet/{id}', name: 'delete_trajet', methods: ['DELETE'])]
-    public function deleteTrajet(int $id, TrajetRepository $trajetRepository, EntityManagerInterface $entityManager): JsonResponse
+    #[Route('/api/trajet/{id}', name: 'suppression_trajet', methods: ['DELETE'])]
+    public function suppressionTrajet(int $id, TrajetRepository $trajetRepository, EntityManagerInterface $entityManager): JsonResponse
     {
         $trajet = $trajetRepository->find($id);
     
@@ -122,8 +122,8 @@ final class ApiTrajetController extends AbstractController
         return new JsonResponse(['message' => 'Trajet supprimé avec succès'], JsonResponse::HTTP_OK);
     }
 
-    #[Route('/api/trajet/{id}', name: 'update_trajet', methods: ['PUT'])]
-    public function updateTrajet(int $id, Request $request, TrajetRepository $trajetRepo, EntityManagerInterface $entityManager, UtilisateurRepository $utilisateurRepo, VilleRepository $villeRepo): JsonResponse
+    #[Route('/api/trajet/{id}', name: 'modification_trajet', methods: ['PUT'])]
+    public function modificationTrajet(int $id, Request $request, TrajetRepository $trajetRepo, EntityManagerInterface $entityManager, UtilisateurRepository $utilisateurRepo, VilleRepository $villeRepo): JsonResponse
     {
         $trajet = $trajetRepo->find($id);
 

@@ -16,8 +16,8 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class ApiReservationController extends AbstractController
 {
-    #[Route('/api/reservation', name: 'create_reservation', methods: ['POST'])]
-    public function createReservation(
+    #[Route('/api/reservation', name: 'creation_reservation', methods: ['POST'])]
+    public function creationReservation(
         Request $request,
         EntityManagerInterface $entityManager,
         UtilisateurRepository $utilisateurRepo,
@@ -108,8 +108,8 @@ final class ApiReservationController extends AbstractController
         return new JsonResponse(['message' => 'Réservation annulée avec succès'], JsonResponse::HTTP_OK);
     }
 
-    #[Route('/api/reservation', name: 'list_reservations', methods: ['GET'])]
-    public function listReservations(ReservationRepository $reservationRepo): JsonResponse
+    #[Route('/api/reservation', name: 'liste_reservations', methods: ['GET'])]
+    public function listeReservations(ReservationRepository $reservationRepo): JsonResponse
     {
         $reservations = $reservationRepo->findAll();
 

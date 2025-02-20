@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Utilisateur;
 use App\Entity\Voiture;
-
+use Symfony\Bundle\SecurityBundle\Security;
 use App\Repository\UtilisateurRepository;
 use App\Repository\RoleRepository;
 use App\Repository\ReservationRepository;
@@ -29,19 +29,19 @@ final class ApiUtilisateurController extends AbstractController
         VilleRepository $villeRepo
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
-    
+
         $user = new Utilisateur();
         $user->setNom($data['nom']);
         $user->setPrenom($data['prenom']);
         $user->setEmail($data['email']);
         $user->setPassword($passwordHasher->hashPassword($user, $data['motDePasse']));
-    
+
         $role = $roleRepo->find($data['idRole']);
         $ville = $villeRepo->find($data['idVille']);
-    
+
         $user->setRoleEntity($role);
         $user->setVille($ville);
-    
+
         if (isset($data['voiture'])) {
             $voitureData = $data['voiture'];
             $voiture = new Voiture();
@@ -49,55 +49,55 @@ final class ApiUtilisateurController extends AbstractController
             $voiture->setModele($voitureData['modele']);
             $voiture->setImmatriculation($voitureData['immatriculation']);
             $voiture->setNbPlaces($voitureData['nb_places']);
-    
+
             // Associe voiture et utilisateur dans les deux sens
             $voiture->setUtilisateur($user);
             $user->setVoiture($voiture);
-    
+
             $entityManager->persist($voiture);
         }
-    
+
         $entityManager->persist($user);
         $entityManager->flush(); // Un seul flush après toutes les opérations
-    
+
         return new JsonResponse(['message' => 'Utilisateur et voiture créés avec succès'], Response::HTTP_CREATED);
     }
-    
+
 
     #[Route('/api/utilisateurs', name: 'liste_utilisateurs', methods: ['GET'])]
-public function listeUtilisateurs(UtilisateurRepository $utilisateurRepo): JsonResponse
-{
-    $currentUser = $this->getUser();
+    public function listeUtilisateurs(UtilisateurRepository $utilisateurRepo): JsonResponse
+    {
+        $currentUser = $this->getUser();
 
-    if (!$currentUser || !in_array('ROLE_ADMIN', $currentUser->getRoles())) {
-        return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
+        if (!$currentUser || !in_array('ROLE_ADMIN', $currentUser->getRoles())) {
+            return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
+        }
+
+        $utilisateurs = $utilisateurRepo->findAll();
+        $data = [];
+
+        foreach ($utilisateurs as $user) {
+            $voiture = $user->getVoiture();
+
+            $data[] = [
+                'id' => $user->getIdUtilisateur(),
+                'nom' => $user->getNom(),
+                'prenom' => $user->getPrenom(),
+                'email' => $user->getEmail(),
+                'ville' => $user->getVille()->getNomCommune(),
+                'role' => in_array('ROLE_ADMIN', $user->getRoles()) ? 'ROLE_ADMIN' : 'ROLE_USER',
+                'voiture' => $voiture ? [
+                    'id' => $voiture->getIdVoiture(),
+                    'marque' => $voiture->getMarque(),
+                    'modele' => $voiture->getModele(),
+                    'immatriculation' => $voiture->getImmatriculation(),
+                    'nb_places' => $voiture->getNbPlaces(),
+                ] : null
+            ];
+        }
+
+        return new JsonResponse($data);
     }
-
-    $utilisateurs = $utilisateurRepo->findAll();
-    $data = [];
-
-    foreach ($utilisateurs as $user) {
-        $voiture = $user->getVoiture();
-
-        $data[] = [
-            'id' => $user->getIdUtilisateur(),
-            'nom' => $user->getNom(),
-            'prenom' => $user->getPrenom(),
-            'email' => $user->getEmail(),
-            'ville' => $user->getVille()->getNomCommune(),
-            'role' => in_array('ROLE_ADMIN', $user->getRoles()) ? 'ROLE_ADMIN' : 'ROLE_USER',
-            'voiture' => $voiture ? [
-                'id' => $voiture->getIdVoiture(),
-                'marque' => $voiture->getMarque(),
-                'modele' => $voiture->getModele(),
-                'immatriculation' => $voiture->getImmatriculation(),
-                'nb_places' => $voiture->getNbPlaces(),
-            ] : null
-        ];
-    }
-
-    return new JsonResponse($data);
-}
 
 
 
@@ -131,18 +131,83 @@ public function listeUtilisateurs(UtilisateurRepository $utilisateurRepo): JsonR
         return new JsonResponse($data);
     }
 
-    #[Route('/api/utilisateur/{id}', name: 'suppression_utilisateur', methods: ['DELETE'])]
-    public function deleteUtilisateur(int $id, EntityManagerInterface $entityManager, UtilisateurRepository $utilisateurRepo): JsonResponse
-    {
-        $currentUser = $this->getUser();
+    #[Route('/api/utilisateur/{id}', name: 'modification_utilisateur', methods: ['PUT'])]
+    public function modificationUtilisateur(
+        int $id,
+        Request $request,
+        EntityManagerInterface $entityManager,
+        UtilisateurRepository $utilisateurRepo,
+        VilleRepository $villeRepo,
+        Security $security
+    ): JsonResponse {
+        // Récupérer l'utilisateur connecté
+        $utilisateurConnecte = $security->getUser();
 
-        if (!$currentUser || !$currentUser->getRoles() || !in_array('ROLE_ADMIN', $currentUser->getRoles())) {
+        // Vérifier si l'utilisateur connecté correspond à l'utilisateur qu'il souhaite modifier
+        $utilisateur = $utilisateurRepo->find($id);
+        if (!$utilisateur) {
+            return new JsonResponse(['error' => 'Utilisateur non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        if ($utilisateurConnecte !== $utilisateur) {
+            return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        // Mise à jour des champs modifiables
+        if (isset($data['nom'])) {
+            $utilisateur->setNom($data['nom']);
+        }
+        if (isset($data['prenom'])) {
+            $utilisateur->setPrenom($data['prenom']);
+        }
+        if (isset($data['email'])) {
+            $utilisateur->setEmail($data['email']);
+        }
+        if (isset($data['idVille'])) {
+            $ville = $villeRepo->find($data['idVille']);
+            if ($ville) {
+                $utilisateur->setVille($ville);
+            } else {
+                return new JsonResponse(['error' => 'Ville non trouvée'], JsonResponse::HTTP_NOT_FOUND);
+            }
+        }
+
+        // Vérifier si l'utilisateur essaie de modifier son rôle (interdit)
+        if (isset($data['idRole'])) {
+            return new JsonResponse(['error' => 'Modification du rôle interdite'], JsonResponse::HTTP_FORBIDDEN);
+        }
+
+        $entityManager->persist($utilisateur);
+        $entityManager->flush();
+
+        return new JsonResponse(['message' => 'Utilisateur mis à jour avec succès'], JsonResponse::HTTP_OK);
+    }
+
+    #[Route('/api/utilisateur/{id}', name: 'suppression_utilisateur', methods: ['DELETE'])]
+    public function suppressionUtilisateur(
+        int $id,
+        EntityManagerInterface $entityManager,
+        UtilisateurRepository $utilisateurRepo,
+        Security $security
+    ): JsonResponse {
+        $currentUser = $security->getUser(); 
+
+        // Vérifier si l'utilisateur est connecté
+        if (!$currentUser) {
             return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
         }
 
         $utilisateur = $utilisateurRepo->find($id);
+
         if (!$utilisateur) {
             return new JsonResponse(['error' => 'Utilisateur non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        // Vérifier si l'utilisateur connecté est ADMIN ou s'il supprime son propre compte
+        if ($currentUser !== $utilisateur && !in_array('ROLE_ADMIN', $currentUser->getRoles())) {
+            return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
         }
 
         $entityManager->remove($utilisateur);
