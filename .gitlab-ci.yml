@@ -1,45 +1,10 @@
-image: mwienk/docker-git-ftp
-
-variables:
-  APP_ENV: prod
-
 stages:
-#  - test
-  - deploy
-  - sonarqube-check
-  - sonarqube-vulnerability-report
-
-
-# Étape de test PHPUnit
-#test:
-#  stage: test
-#  image: php:8.2
-#  before_script:
-#    - apt-get update && apt-get install -y unzip git libzip-dev libpq-dev
-#    - docker-php-ext-install zip pdo pdo_mysql
-#    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-#    - composer require --dev phpunit/phpunit
-#  script:
-#    - composer install --optimize-autoloader
-#    - php vendor/bin/phpunit
-#  only:
-#    - main
-
-# Étape de déploiement FTP
-deploy:
-  stage: deploy
-  image: mwienk/docker-git-ftp
-  only:
-    - main
-  script:
-    - apt-get update -qq && apt-get install -y -qq lftp
-    - lftp -c "set ftp:ssl-allow no; open -u $USERNAME,$PASSWORD $HOST; mirror -Rv ./ --ignore-time --parallel=10  --exclude .git/"
-#  needs:
-#    - test  # Assure que le test passe avant de déployer
+    - sonarqube-check
+    - sonarqube-vulnerability-report
 
 sonarqube-check:
   stage: sonarqube-check
-  image:
+  image: 
     name: sonarsource/sonar-scanner-cli:5.0
     entrypoint: [""]
   variables:
@@ -49,7 +14,7 @@ sonarqube-check:
     key: "${CI_JOB_NAME}"
     paths:
       - .sonar/cache
-  script:
+  script: 
     - sonar-scanner
   allow_failure: true
   only:
@@ -74,5 +39,3 @@ sonarqube-vulnerability-report:
       sast: gl-sast-sonar-report.json
   dependencies:
     - sonarqube-check
-
-   
