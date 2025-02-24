@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\DataFixtures;
 
@@ -29,7 +29,7 @@ class AppFixtures extends Fixture
         $roleUser->setNomRole(RoleType::UTILISATEUR);
         $manager->persist($roleUser);
 
-        // Crée une ville
+        // CrÃ©e une ville
         $ville = new Ville();
         $ville->setCodePostale('75001');
         $ville->setNomCommune('Paris');

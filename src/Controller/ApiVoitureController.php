@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Controller;
 
@@ -21,7 +21,7 @@ class ApiVoitureController extends AbstractController
 
         $utilisateur = $utilisateurRepo->find($data['id_utilisateur'] ?? null);
         if (!$utilisateur) {
-            return new JsonResponse(['error' => 'Utilisateur non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Utilisateur non trouvÃ©'], JsonResponse::HTTP_NOT_FOUND);
         }
 
         $voiture = new Voiture();
@@ -39,7 +39,7 @@ class ApiVoitureController extends AbstractController
         $entityManager->persist($voiture);
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Voiture ajoutée avec succès et rattachée à l\'utilisateur'], JsonResponse::HTTP_CREATED);
+        return new JsonResponse(['message' => 'Voiture ajoutÃ©e avec succÃ¨s et rattachÃ©e Ã  l\'utilisateur'], JsonResponse::HTTP_CREATED);
     }
 
     #[Route('/api/voiture/{id}', name: 'suppression_voiture', methods: ['DELETE'])]
@@ -48,19 +48,19 @@ class ApiVoitureController extends AbstractController
         $voiture = $entityManager->getRepository(Voiture::class)->find($id);
 
         if (!$voiture) {
-            return new JsonResponse(['error' => 'Voiture non trouvée'], JsonResponse::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Voiture non trouvÃ©e'], JsonResponse::HTTP_NOT_FOUND);
         }
 
         $utilisateurConnecte = $security->getUser();
 
         if ($voiture->getUtilisateur() !== $utilisateurConnecte) {
-            return new JsonResponse(['error' => 'Vous n\'êtes pas autorisé à supprimer cette voiture'], JsonResponse::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => 'Vous n\'Ãªtes pas autorisÃ© Ã  supprimer cette voiture'], JsonResponse::HTTP_FORBIDDEN);
         }
 
         $entityManager->remove($voiture);
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Voiture supprimée avec succès'], JsonResponse::HTTP_OK);
+        return new JsonResponse(['message' => 'Voiture supprimÃ©e avec succÃ¨s'], JsonResponse::HTTP_OK);
     }
 
     #[Route('/api/voitures', name: 'liste_voitures', methods: ['GET'])]
@@ -70,7 +70,7 @@ class ApiVoitureController extends AbstractController
 
       
         if (!$currentUser || !in_array('ROLE_ADMIN', $currentUser->getRoles())) {
-            return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => 'AccÃ¨s refusÃ©'], JsonResponse::HTTP_FORBIDDEN);
         }
 
         $voitures = $entityManager->getRepository(Voiture::class)->findAll();

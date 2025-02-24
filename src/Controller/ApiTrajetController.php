@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Controller;
 
@@ -21,19 +21,19 @@ final class ApiTrajetController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['id_utilisateur'], $data['id_ville_depart'], $data['id_ville_arrivee'], $data['date_heure'], $data['places_restantes'])) {
-            return new JsonResponse(['error' => 'Données manquantes'], JsonResponse::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => 'DonnÃ©es manquantes'], JsonResponse::HTTP_BAD_REQUEST);
         }
 
         $conducteur = $utilisateurRepo->find($data['id_utilisateur']);
         if (!$conducteur || !$conducteur->getVoiture()) {
-            return new JsonResponse(['error' => 'Le conducteur doit posséder une voiture'], JsonResponse::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => 'Le conducteur doit possÃ©der une voiture'], JsonResponse::HTTP_FORBIDDEN);
         }
 
         $villeDepart = $villeRepo->find($data['id_ville_depart']);
         $villeArrivee = $villeRepo->find($data['id_ville_arrivee']);
 
         if (!$villeDepart || !$villeArrivee) {
-            return new JsonResponse(['error' => 'Villes non trouvées'], JsonResponse::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Villes non trouvÃ©es'], JsonResponse::HTTP_NOT_FOUND);
         }
 
         $trajet = new Trajet();
@@ -47,7 +47,7 @@ final class ApiTrajetController extends AbstractController
         $entityManager->persist($trajet);
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Trajet créé avec succès'], JsonResponse::HTTP_CREATED);
+        return new JsonResponse(['message' => 'Trajet crÃ©Ã© avec succÃ¨s'], JsonResponse::HTTP_CREATED);
     }
 
     #[Route('/api/trajets', name: 'liste_trajets', methods: ['GET'])]
@@ -107,18 +107,18 @@ final class ApiTrajetController extends AbstractController
         $trajet = $trajetRepository->find($id);
     
         if (!$trajet) {
-            return new JsonResponse(['error' => 'Trajet non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Trajet non trouvÃ©'], JsonResponse::HTTP_NOT_FOUND);
         }
     
         $currentUser = $this->getUser();
         if ($trajet->getConducteur() !== $currentUser) {
-            return new JsonResponse(['error' => 'Accès refusé : Vous n\'êtes pas le créateur de ce trajet'], JsonResponse::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => 'AccÃ¨s refusÃ© : Vous n\'Ãªtes pas le crÃ©ateur de ce trajet'], JsonResponse::HTTP_FORBIDDEN);
         }
     
         $entityManager->remove($trajet);
         $entityManager->flush();
     
-        return new JsonResponse(['message' => 'Trajet supprimé avec succès'], JsonResponse::HTTP_OK);
+        return new JsonResponse(['message' => 'Trajet supprimÃ© avec succÃ¨s'], JsonResponse::HTTP_OK);
     }
 
     #[Route('/api/trajet/{id}', name: 'modification_trajet', methods: ['PUT'])]
@@ -127,26 +127,26 @@ final class ApiTrajetController extends AbstractController
         $trajet = $trajetRepo->find($id);
 
         if (!$trajet) {
-            return new JsonResponse(['error' => 'Trajet non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Trajet non trouvÃ©'], JsonResponse::HTTP_NOT_FOUND);
         }
 
         $data = json_decode($request->getContent(), true);
 
         if (isset($data['id_utilisateur'])) {
             $conducteur = $utilisateurRepo->find($data['id_utilisateur']);
-            if (!$conducteur) return new JsonResponse(['error' => 'Conducteur non trouvé'], JsonResponse::HTTP_NOT_FOUND);
+            if (!$conducteur) return new JsonResponse(['error' => 'Conducteur non trouvÃ©'], JsonResponse::HTTP_NOT_FOUND);
             $trajet->setConducteur($conducteur);
         }
 
         if (isset($data['id_ville_depart'])) {
             $villeDepart = $villeRepo->find($data['id_ville_depart']);
-            if (!$villeDepart) return new JsonResponse(['error' => 'Ville de départ non trouvée'], JsonResponse::HTTP_NOT_FOUND);
+            if (!$villeDepart) return new JsonResponse(['error' => 'Ville de dÃ©part non trouvÃ©e'], JsonResponse::HTTP_NOT_FOUND);
             $trajet->setVilleDepart($villeDepart);
         }
 
         if (isset($data['id_ville_arrivee'])) {
             $villeArrivee = $villeRepo->find($data['id_ville_arrivee']);
-            if (!$villeArrivee) return new JsonResponse(['error' => 'Ville d\'arrivée non trouvée'], JsonResponse::HTTP_NOT_FOUND);
+            if (!$villeArrivee) return new JsonResponse(['error' => 'Ville d\'arrivÃ©e non trouvÃ©e'], JsonResponse::HTTP_NOT_FOUND);
             $trajet->setVilleArrivee($villeArrivee);
         }
 
@@ -164,7 +164,7 @@ final class ApiTrajetController extends AbstractController
 
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Trajet mis à jour avec succès'], JsonResponse::HTTP_OK);
+        return new JsonResponse(['message' => 'Trajet mis Ã  jour avec succÃ¨s'], JsonResponse::HTTP_OK);
     }
     
 }

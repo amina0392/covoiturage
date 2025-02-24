@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Controller;
 
@@ -26,13 +26,13 @@ final class ApiVilleController extends AbstractController
         $currentUser = $this->security->getUser();
 
         if (!$currentUser || !in_array('ROLE_ADMIN', $currentUser->getRoles())) {
-            return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => 'AccÃ¨s refusÃ©'], JsonResponse::HTTP_FORBIDDEN);
         }
 
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['nom_commune'], $data['code_postale'])) {
-            return new JsonResponse(['error' => 'Données incomplètes'], JsonResponse::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => 'DonnÃ©es incomplÃ¨tes'], JsonResponse::HTTP_BAD_REQUEST);
         }
 
         $ville = new Ville();
@@ -42,7 +42,7 @@ final class ApiVilleController extends AbstractController
         $entityManager->persist($ville);
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Ville ajoutée avec succès'], JsonResponse::HTTP_CREATED);
+        return new JsonResponse(['message' => 'Ville ajoutÃ©e avec succÃ¨s'], JsonResponse::HTTP_CREATED);
     }
 
     #[Route('/api/villes', name: 'liste_villes', methods: ['GET'])]
@@ -69,7 +69,7 @@ final class ApiVilleController extends AbstractController
         $codePostale = $request->query->get('code_postale');
 
         if (!$nomCommune || !$codePostale) {
-            return new JsonResponse(['error' => 'Paramètres manquants'], JsonResponse::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => 'ParamÃ¨tres manquants'], JsonResponse::HTTP_BAD_REQUEST);
         }
 
         $ville = $villeRepo->findOneBy([
@@ -78,7 +78,7 @@ final class ApiVilleController extends AbstractController
         ]);
 
         if (!$ville) {
-            return new JsonResponse(['error' => 'Ville non trouvée'], JsonResponse::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Ville non trouvÃ©e'], JsonResponse::HTTP_NOT_FOUND);
         }
 
         return new JsonResponse([
@@ -95,18 +95,18 @@ final class ApiVilleController extends AbstractController
         $currentUser = $this->security->getUser();
 
         if (!$currentUser || !in_array('ROLE_ADMIN', $currentUser->getRoles())) {
-            return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => 'AccÃ¨s refusÃ©'], JsonResponse::HTTP_FORBIDDEN);
         }
 
         $ville = $villeRepo->find($id);
 
         if (!$ville) {
-            return new JsonResponse(['error' => 'Ville non trouvée'], JsonResponse::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Ville non trouvÃ©e'], JsonResponse::HTTP_NOT_FOUND);
         }
 
         $entityManager->remove($ville);
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Ville supprimée avec succès'], JsonResponse::HTTP_OK);
+        return new JsonResponse(['message' => 'Ville supprimÃ©e avec succÃ¨s'], JsonResponse::HTTP_OK);
     }
 }

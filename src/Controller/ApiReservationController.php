@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Controller;
 
@@ -38,7 +38,7 @@ final class ApiReservationController extends AbstractController
         }
 
         if ($trajet->getPlacesRestantes() <= 0) {
-            return new JsonResponse(['message' => 'Réservation impossible (plus de place)', 'status' => 'NOK'], JsonResponse::HTTP_BAD_REQUEST);
+            return new JsonResponse(['message' => 'RÃ©servation impossible (plus de place)', 'status' => 'NOK'], JsonResponse::HTTP_BAD_REQUEST);
         }
 
         $reservation = new Reservation();
@@ -58,7 +58,7 @@ final class ApiReservationController extends AbstractController
         $entityManager->persist($trajet);
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Réservation effectuée', 'status' => 'OK'], JsonResponse::HTTP_CREATED);
+        return new JsonResponse(['message' => 'RÃ©servation effectuÃ©e', 'status' => 'OK'], JsonResponse::HTTP_CREATED);
     }
 
     #[Route('/api/reservation/{id}/confirmer', name: 'confirmer_reservation', methods: ['PUT'])]
@@ -67,19 +67,19 @@ final class ApiReservationController extends AbstractController
         $reservation = $reservationRepo->find($id);
 
         if (!$reservation) {
-            return new JsonResponse(['error' => 'Réservation non trouvée'], JsonResponse::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'RÃ©servation non trouvÃ©e'], JsonResponse::HTTP_NOT_FOUND);
         }
 
         $currentUser = $this->getUser();
         if ($reservation->getTrajet()->getConducteur() !== $currentUser) {
-            return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => 'AccÃ¨s refusÃ©'], JsonResponse::HTTP_FORBIDDEN);
         }
 
         $reservation->setStatut(ReservationStatut::CONFIRMEE);
         $entityManager->persist($reservation);
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Réservation confirmée avec succès'], JsonResponse::HTTP_OK);
+        return new JsonResponse(['message' => 'RÃ©servation confirmÃ©e avec succÃ¨s'], JsonResponse::HTTP_OK);
     }
 
     #[Route('/api/reservation/{id}/annuler', name: 'annuler_reservation', methods: ['PUT'])]
@@ -88,12 +88,12 @@ final class ApiReservationController extends AbstractController
         $reservation = $reservationRepo->find($id);
 
         if (!$reservation) {
-            return new JsonResponse(['error' => 'Réservation non trouvée'], JsonResponse::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'RÃ©servation non trouvÃ©e'], JsonResponse::HTTP_NOT_FOUND);
         }
 
         $currentUser = $this->getUser();
         if ($reservation->getUtilisateur() !== $currentUser) {
-            return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => 'AccÃ¨s refusÃ©'], JsonResponse::HTTP_FORBIDDEN);
         }
 
         $trajet = $reservation->getTrajet();
@@ -105,7 +105,7 @@ final class ApiReservationController extends AbstractController
         $entityManager->persist($reservation);
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Réservation annulée avec succès'], JsonResponse::HTTP_OK);
+        return new JsonResponse(['message' => 'RÃ©servation annulÃ©e avec succÃ¨s'], JsonResponse::HTTP_OK);
     }
 
     #[Route('/api/reservation', name: 'liste_reservations', methods: ['GET'])]
@@ -143,7 +143,7 @@ final class ApiReservationController extends AbstractController
         $reservation = $reservationRepo->find($id);
 
         if (!$reservation) {
-            return new JsonResponse(['error' => 'Réservation non trouvée'], JsonResponse::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'RÃ©servation non trouvÃ©e'], JsonResponse::HTTP_NOT_FOUND);
         }
 
         return $this->json($reservation);
