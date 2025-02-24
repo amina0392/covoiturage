@@ -33,7 +33,6 @@ class Trajet
     #[ORM\Column(name: "detail_trajet", type: "text", nullable: true)]
     private ?string $detailTrajet = null;
 
-
     public function getIdTrajet(): ?int { return $this->idTrajet; }
     public function getConducteur(): ?Utilisateur { return $this->conducteur; }
     public function setConducteur(Utilisateur $conducteur): self { $this->conducteur = $conducteur; return $this; }
