@@ -51,10 +51,8 @@ class ApiVoitureController extends AbstractController
             return new JsonResponse(['error' => 'Voiture non trouvée'], JsonResponse::HTTP_NOT_FOUND);
         }
 
-        // Récupérer l'utilisateur connecté
         $utilisateurConnecte = $security->getUser();
 
-        // Vérifier si l'utilisateur connecté est bien le propriétaire de la voiture
         if ($voiture->getUtilisateur() !== $utilisateurConnecte) {
             return new JsonResponse(['error' => 'Vous n\'êtes pas autorisé à supprimer cette voiture'], JsonResponse::HTTP_FORBIDDEN);
         }
@@ -70,7 +68,7 @@ class ApiVoitureController extends AbstractController
     {
         $currentUser = $this->getUser();
 
-        // Vérifie si l'utilisateur est connecté et possède le rôle ADMIN
+      
         if (!$currentUser || !in_array('ROLE_ADMIN', $currentUser->getRoles())) {
             return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
         }

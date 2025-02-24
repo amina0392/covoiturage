@@ -50,7 +50,7 @@ final class ApiUtilisateurController extends AbstractController
             $voiture->setImmatriculation($voitureData['immatriculation']);
             $voiture->setNbPlaces($voitureData['nb_places']);
 
-            // Associe voiture et utilisateur dans les deux sens
+            
             $voiture->setUtilisateur($user);
             $user->setVoiture($voiture);
 
@@ -58,7 +58,7 @@ final class ApiUtilisateurController extends AbstractController
         }
 
         $entityManager->persist($user);
-        $entityManager->flush(); // Un seul flush après toutes les opérations
+        $entityManager->flush(); 
 
         return new JsonResponse(['message' => 'Utilisateur et voiture créés avec succès'], Response::HTTP_CREATED);
     }
@@ -140,10 +140,10 @@ final class ApiUtilisateurController extends AbstractController
         VilleRepository $villeRepo,
         Security $security
     ): JsonResponse {
-        // Récupérer l'utilisateur connecté
+       
         $utilisateurConnecte = $security->getUser();
 
-        // Vérifier si l'utilisateur connecté correspond à l'utilisateur qu'il souhaite modifier
+      
         $utilisateur = $utilisateurRepo->find($id);
         if (!$utilisateur) {
             return new JsonResponse(['error' => 'Utilisateur non trouvé'], JsonResponse::HTTP_NOT_FOUND);
@@ -155,7 +155,6 @@ final class ApiUtilisateurController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
 
-        // Mise à jour des champs modifiables
         if (isset($data['nom'])) {
             $utilisateur->setNom($data['nom']);
         }
@@ -174,7 +173,7 @@ final class ApiUtilisateurController extends AbstractController
             }
         }
 
-        // Vérifier si l'utilisateur essaie de modifier son rôle (interdit)
+       
         if (isset($data['idRole'])) {
             return new JsonResponse(['error' => 'Modification du rôle interdite'], JsonResponse::HTTP_FORBIDDEN);
         }
@@ -194,7 +193,6 @@ final class ApiUtilisateurController extends AbstractController
     ): JsonResponse {
         $currentUser = $security->getUser(); 
 
-        // Vérifier si l'utilisateur est connecté
         if (!$currentUser) {
             return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
         }
@@ -205,7 +203,6 @@ final class ApiUtilisateurController extends AbstractController
             return new JsonResponse(['error' => 'Utilisateur non trouvé'], JsonResponse::HTTP_NOT_FOUND);
         }
 
-        // Vérifier si l'utilisateur connecté est ADMIN ou s'il supprime son propre compte
         if ($currentUser !== $utilisateur && !in_array('ROLE_ADMIN', $currentUser->getRoles())) {
             return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
         }

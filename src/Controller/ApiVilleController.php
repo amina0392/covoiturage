@@ -20,13 +20,11 @@ final class ApiVilleController extends AbstractController
         $this->security = $security;
     }
 
-    // ✅ Ajouter une ville (ADMIN ONLY)
     #[Route('/api/ville', name: 'ajout_ville', methods: ['POST'])]
     public function ajoutVille(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         $currentUser = $this->security->getUser();
 
-        // Vérification si l'utilisateur est admin
         if (!$currentUser || !in_array('ROLE_ADMIN', $currentUser->getRoles())) {
             return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
         }
@@ -47,7 +45,6 @@ final class ApiVilleController extends AbstractController
         return new JsonResponse(['message' => 'Ville ajoutée avec succès'], JsonResponse::HTTP_CREATED);
     }
 
-    // ✅ Afficher toutes les villes (Accès public)
     #[Route('/api/villes', name: 'liste_villes', methods: ['GET'])]
     public function listeVilles(VilleRepository $villeRepo): JsonResponse
     {
@@ -65,7 +62,6 @@ final class ApiVilleController extends AbstractController
         return new JsonResponse($data, JsonResponse::HTTP_OK);
     }
 
-    // ✅ Trouver une ville par son nom et code postal (Accès public)
     #[Route('/api/ville/recherche', name: 'recherche_ville', methods: ['GET'])]
     public function rechercheVille(Request $request, VilleRepository $villeRepo): JsonResponse
     {
@@ -92,13 +88,12 @@ final class ApiVilleController extends AbstractController
         ], JsonResponse::HTTP_OK);
     }
 
-    // ✅ Supprimer une ville par ID (ADMIN ONLY)
+   
     #[Route('/api/ville/{id}', name: 'supprimer_ville', methods: ['DELETE'])]
     public function supprimerVille(int $id, EntityManagerInterface $entityManager, VilleRepository $villeRepo): JsonResponse
     {
         $currentUser = $this->security->getUser();
 
-        // Vérification si l'utilisateur est admin
         if (!$currentUser || !in_array('ROLE_ADMIN', $currentUser->getRoles())) {
             return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
         }

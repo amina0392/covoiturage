@@ -33,7 +33,6 @@ class Trajet
     #[ORM\Column(name: "detail_trajet", type: "text", nullable: true)]
     private ?string $detailTrajet = null;
 
-    // Getters and Setters generated below
 
     public function getIdTrajet(): ?int { return $this->idTrajet; }
     public function getConducteur(): ?Utilisateur { return $this->conducteur; }

@@ -110,7 +110,6 @@ final class ApiTrajetController extends AbstractController
             return new JsonResponse(['error' => 'Trajet non trouvé'], JsonResponse::HTTP_NOT_FOUND);
         }
     
-        // Vérification que l'utilisateur connecté est bien le créateur du trajet
         $currentUser = $this->getUser();
         if ($trajet->getConducteur() !== $currentUser) {
             return new JsonResponse(['error' => 'Accès refusé : Vous n\'êtes pas le créateur de ce trajet'], JsonResponse::HTTP_FORBIDDEN);

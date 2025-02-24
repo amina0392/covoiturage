@@ -39,7 +39,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     private ?Voiture $voiture = null;
 
 
-    // Ajout des méthodes de UserInterface
     public function getIdUtilisateur(): ?int
     {
         return $this->idUtilisateur;
@@ -83,14 +82,12 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
 
-    // 🔥 La méthode exigée par UserInterface
     public function getRoles(): array
     {
         return [$this->role ? 'ROLE_' . strtoupper($this->role->getNomRole()) : 'ROLE_UTILISATEUR'];
     }
 
 
-    // 🔥 Accès direct à l'entité Role
     public function getRoleEntity(): ?Role
     {
         return $this->role;
@@ -127,7 +124,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    // 🔥 Méthodes obligatoires de UserInterface 🔥
 
     public function getUserIdentifier(): string
     {
@@ -137,6 +133,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function eraseCredentials(): void
     {
-        // Nettoie les données sensibles après l'authentification (ex: mot de passe en clair)
+       
     }
 }
