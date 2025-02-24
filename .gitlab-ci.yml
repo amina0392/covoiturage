@@ -1,6 +1,7 @@
 stages:
     - sonarqube-check
     - sonarqube-vulnerability-report
+    - deploy
 
 sonarqube-check:
   stage: sonarqube-check
@@ -45,3 +46,14 @@ sonarqube-vulnerability-report:
       sast: gl-sast-sonar-report.json
   dependencies:
     - sonarqube-check
+deploy:
+    stage: deploy
+    only:
+        - main
+    script:
+        # Installe lftp
+        - apt-get update -qq && apt-get install -y -qq lftp
+
+
+        # Déploie le contenu du dossier temporaire
+        - lftp -c "set ftp:ssl-allow no; open -u $USERNAME,$PASSWORD $HOST; mirror -Rv ./ --ignore-time --parallel=10 --exclude .git/"
