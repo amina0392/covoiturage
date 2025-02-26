@@ -60,7 +60,7 @@ final class ApiUtilisateurController extends AbstractController
         $entityManager->persist($user);
         $entityManager->flush(); 
 
-        return new JsonResponse(['message' => 'Utilisateur et voiture crÃ©Ã©s avec succÃ¨s'], Response::HTTP_CREATED);
+        return new JsonResponse(['message' => 'Utilisateur et voiture crÃƒÂ©ÃƒÂ©s avec succÃƒÂ¨s'], Response::HTTP_CREATED);
     }
 
 
@@ -70,7 +70,7 @@ final class ApiUtilisateurController extends AbstractController
         $currentUser = $this->getUser();
 
         if (!$currentUser || !in_array('ROLE_ADMIN', $currentUser->getRoles())) {
-            return new JsonResponse(['error' => 'AccÃ¨s refusÃ©'], JsonResponse::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => 'AccÃƒÂ¨s refusÃƒÂ©'], JsonResponse::HTTP_FORBIDDEN);
         }
 
         $utilisateurs = $utilisateurRepo->findAll();
@@ -146,11 +146,11 @@ final class ApiUtilisateurController extends AbstractController
       
         $utilisateur = $utilisateurRepo->find($id);
         if (!$utilisateur) {
-            return new JsonResponse(['error' => 'Utilisateur non trouvÃ©'], JsonResponse::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Utilisateur non trouvÃƒÂ©'], JsonResponse::HTTP_NOT_FOUND);
         }
 
         if ($utilisateurConnecte !== $utilisateur) {
-            return new JsonResponse(['error' => 'AccÃ¨s refusÃ©'], JsonResponse::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => 'AccÃƒÂ¨s refusÃƒÂ©'], JsonResponse::HTTP_FORBIDDEN);
         }
 
         $data = json_decode($request->getContent(), true);
@@ -169,19 +169,19 @@ final class ApiUtilisateurController extends AbstractController
             if ($ville) {
                 $utilisateur->setVille($ville);
             } else {
-                return new JsonResponse(['error' => 'Ville non trouvÃ©e'], JsonResponse::HTTP_NOT_FOUND);
+                return new JsonResponse(['error' => 'Ville non trouvÃƒÂ©e'], JsonResponse::HTTP_NOT_FOUND);
             }
         }
 
        
         if (isset($data['idRole'])) {
-            return new JsonResponse(['error' => 'Modification du rÃ´le interdite'], JsonResponse::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => 'Modification du rÃƒÂ´le interdite'], JsonResponse::HTTP_FORBIDDEN);
         }
 
         $entityManager->persist($utilisateur);
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Utilisateur mis Ã  jour avec succÃ¨s'], JsonResponse::HTTP_OK);
+        return new JsonResponse(['message' => 'Utilisateur mis ÃƒÂ  jour avec succÃƒÂ¨s'], JsonResponse::HTTP_OK);
     }
 
     #[Route('/api/utilisateur/{id}', name: 'suppression_utilisateur', methods: ['DELETE'])]
@@ -194,22 +194,22 @@ final class ApiUtilisateurController extends AbstractController
         $currentUser = $security->getUser(); 
 
         if (!$currentUser) {
-            return new JsonResponse(['error' => 'AccÃ¨s refusÃ©'], JsonResponse::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => 'AccÃƒÂ¨s refusÃƒÂ©'], JsonResponse::HTTP_FORBIDDEN);
         }
 
         $utilisateur = $utilisateurRepo->find($id);
 
         if (!$utilisateur) {
-            return new JsonResponse(['error' => 'Utilisateur non trouvÃ©'], JsonResponse::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Utilisateur non trouvÃƒÂ©'], JsonResponse::HTTP_NOT_FOUND);
         }
 
         if ($currentUser !== $utilisateur && !in_array('ROLE_ADMIN', $currentUser->getRoles())) {
-            return new JsonResponse(['error' => 'AccÃ¨s refusÃ©'], JsonResponse::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => 'AccÃƒÂ¨s refusÃƒÂ©'], JsonResponse::HTTP_FORBIDDEN);
         }
 
         $entityManager->remove($utilisateur);
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Utilisateur supprimÃ© avec succÃ¨s'], JsonResponse::HTTP_OK);
+        return new JsonResponse(['message' => 'Utilisateur supprimÃƒÂ© avec succÃƒÂ¨s'], JsonResponse::HTTP_OK);
     }
 }

@@ -4,7 +4,7 @@ namespace App\Enum;
 
 enum ReservationStatut: string {
     case EN_ATTENTE = 'en attente';
-    case CONFIRMEE = 'confirmÃ©e';
-    case ANNULEE = 'annulÃ©e';
+    case CONFIRMEE = 'confirmÃƒÂ©e';
+    case ANNULEE = 'annulÃƒÂ©e';
 }
 

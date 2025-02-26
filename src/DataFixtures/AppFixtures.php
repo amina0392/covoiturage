@@ -29,7 +29,7 @@ class AppFixtures extends Fixture
         $roleUser->setNomRole(RoleType::UTILISATEUR);
         $manager->persist($roleUser);
 
-        // CrÃ©e une ville
+        // CrÃƒÂ©e une ville
         $ville = new Ville();
         $ville->setCodePostale('75001');
         $ville->setNomCommune('Paris');
