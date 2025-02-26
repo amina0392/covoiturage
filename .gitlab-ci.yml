@@ -20,6 +20,10 @@ sonarqube-check:
     - echo "SONAR_HOST_URL=${SONAR_HOST_URL}"
     - echo "SONAR_TOKEN=${SONAR_TOKEN}"
     - curl -I "${SONAR_HOST_URL}"
+    - echo "Nettoyage du dépôt Git..."
+    - git fetch --unshallow
+    - git reset --hard HEAD
+    - git clean -fdx
     - sonar-scanner -X
   allow_failure: true
   only:
