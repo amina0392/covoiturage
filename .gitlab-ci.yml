@@ -16,12 +16,8 @@ sonarqube-check:
     paths:
       - .sonar/cache
   script: 
-    - echo "Vérification des variables..."
-    - echo "SONAR_HOST_URL=${SONAR_HOST_URL}"
-    - echo "SONAR_TOKEN=${SONAR_TOKEN}"
-    - curl -I "${SONAR_HOST_URL}"
     - echo "Nettoyage du dépôt Git..."
-    - git fetch --unshallow
+    - if [ -f ".git/shallow" ]; then git fetch --unshallow; fi
     - git reset --hard HEAD
     - git clean -fdx
     - sonar-scanner -X
