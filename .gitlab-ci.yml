@@ -1,55 +1,76 @@
-stages:
-    - sonarqube-check
-    - sonarqube-vulnerability-report
-    - deploy
+# Select image from https://hub.docker.com/_/php/
+image: php:8.2
 
-sonarqube-check:
-  stage: sonarqube-check
-  image: 
-    name: sonarsource/sonar-scanner-cli:5.0
-    entrypoint: [""]
-  variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
-  cache:
-    key: "${CI_JOB_NAME}"
-    paths:
-      - .sonar/cache
-  before_script:
-  - git fetch --all --prune
-  script: 
-    - sonar-scanner
-  allow_failure: true
-  only:
-    - merge_requests
-    - master
-    - main
-    - develop
+# Select what we should cache
+cache:
+  paths:
+    - vendor/
 
-sonarqube-vulnerability-report:
-  stage: sonarqube-vulnerability-report
+# Configuration des services
+services:
+  - mysql
+
+variables:
+  MYSQL_DATABASE: tima6358_amina
+  MYSQL_ROOT_PASSWORD: "alanTuring2024!"
+  MYSQL_USER: tima6358_amina
+  MYSQL_PASSWORD: "alanTuring2024!"
+  DATABASE_URL: "mysql://tima6358_amina:alanTuring2024%21@greta-bretagne-sud.org:3306/tima6358_amina?serverVersion=10.6.21-MariaDB&charset=utf8mb4"
+
+
+# Étapes à exécuter avant les scripts de test
+before_script:
+  # Mise à jour et installation des dépendances dans l'image PHP
+  - apt-get update -yqq
+  - apt-get install git libzip-dev zip -yqq
+  - docker-php-ext-install pdo_mysql zip
+  - curl -sS https://getcomposer.org/installer | php
+  - php composer.phar update
+  - php composer.phar install
+  - apt-get install -y default-mysql-client
+
+# Script de connexion pour vérifier la connexion MySQL
+connect:
   script:
-    - 'curl -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/issues/gitlab_sast_export?projectKey=covoiturage&branch=${CI_COMMIT_BRANCH}&pullRequest=${CI_MERGE_REQUEST_IID}" -o gl-sast-sonar-report.json'
-  allow_failure: true
-  only:
-    - merge_requests
-    - master
-    - main
-    - develop
-  artifacts:
-    expire_in: 1 day
-    reports:
-      sast: gl-sast-sonar-report.json
-  dependencies:
-    - sonarqube-check
-deploy:
-    stage: deploy
-    only:
-        - main
-    script:
-        # Installe lftp
-        - apt-get update -qq && apt-get install -y -qq lftp
+    - while ! mysqladmin ping -h"mysql" --silent; do sleep 1; done
+    - mysql --user=root --password="$MYSQL_ROOT_PASSWORD" --host="mysql" -e "CREATE USER IF NOT EXISTS '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD';"
+    - mysql --user=root --password="$MYSQL_ROOT_PASSWORD" --host="mysql" -e "GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%'; FLUSH PRIVILEGES;"
+    - echo "SELECT 'OK';" | mysql --user="$MYSQL_USER" --password="$MYSQL_ROOT_PASSWORD" --host="mysql" "$MYSQL_DATABASE"
 
+# Tests avec MySQL
+test:mysql:
+  script:
+    - chmod +x vendor/bin/phpunit
+    - vendor/bin/phpunit --configuration phpunitPDO.xml --coverage-text
 
-        # Déploie le contenu du dossier temporaire
-        - lftp -c "set ftp:ssl-allow no; open -u $USERNAME,$PASSWORD $HOST; mirror -Rv ./ --ignore-time --parallel=10 --exclude .git/"
+# Tests avec PHP 7.4 et MySQL
+test:php7.4:mysql:
+  image: php:7.4
+  before_script:
+    - apt-get update -yqq
+    - apt-get install git libzip-dev zip -yqq
+    - docker-php-ext-install pdo_mysql zip
+    - curl -sS https://getcomposer.org/installer | php
+    - php -v
+    - php composer.phar self-update
+    - php composer.phar update
+    - php composer.phar install
+    - apt-get install -y default-mysql-client
+  script:
+    - vendor/bin/phpunit --configuration phpunitPDO.xml --coverage-text
+
+# Tests avec PHP 8.0 et MySQL
+test:php8.0:mysql:
+  image: php:8.0
+  before_script:
+    - apt-get update -yqq
+    - apt-get install git libzip-dev zip -yqq
+    - docker-php-ext-install pdo_mysql zip
+    - curl -sS https://getcomposer.org/installer | php
+    - php -v
+    - php composer.phar self-update
+    - php composer.phar update
+    - php composer.phar install
+    - apt-get install -y default-mysql-client
+  script:
+    - vendor/bin/phpunit --configuration phpunitPDO.xml --coverage-text
