@@ -6,4 +6,4 @@ echo '<?xml version="1.0" encoding="UTF-8"?>
             <directory>tests</directory>
         </testsuite>
     </testsuites>
-</phpunit>' > phpunitPDO.xml
+</phpunit>' phpunitPDO.xml
