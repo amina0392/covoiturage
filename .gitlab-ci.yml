@@ -17,6 +17,7 @@ variables:
   KERNEL_CLASS: "App\ Kernel"
 
 before_script:
+  - rm -f .phpunit.result.cache || true
   - rm -f .git/shallow.lock
   - apt-get update -yqq
   - apt-get install git libzip-dev zip -yqq
