@@ -15,15 +15,12 @@ variables:
   DATABASE_URL: "mysql://tima6358_amina:alanTuring2024!@mysql:3306/tima6358_amina?serverVersion=10.6.21-MariaDB&charset=utf8mb4"
 
 before_script:
-  - echo "🔄 Mise à jour des paquets..."
+  - echo "Mise à jour des paquets"
   - apt-get update -yqq
   - apt-get install git libzip-dev zip -yqq
   - docker-php-ext-install pdo_mysql zip
   - curl -sS https://getcomposer.org/installer | php
   - php composer.phar self-update
-
-  # Suppression et réinstallation propre des dépendances
-  - echo "🧹 Nettoyage de vendor/..."
   - rm -rf vendor/
   - php composer.phar install --no-interaction --prefer-dist
   - composer dump-autoload
@@ -31,20 +28,17 @@ before_script:
 
 connect:
   script:
-    - echo "🔄 Attente de MySQL..."
+    - echo "Attente de MySQL..."
     - while ! mysqladmin ping -h"mysql" --silent; do sleep 1; done
-    - echo "✅ MySQL est prêt !"
-    - echo "🔑 Création de l'utilisateur MySQL..."
+    - echo "MySQL est prêt !"
     - mysql --user=root --password="$MYSQL_ROOT_PASSWORD" --host="mysql" -e "CREATE USER IF NOT EXISTS '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';"
-    - echo "🔑 Attribution des droits..."
     - mysql --user=root --password="$MYSQL_ROOT_PASSWORD" --host="mysql" -e "GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%'; FLUSH PRIVILEGES;"
-    - echo "✅ Vérification de la connexion à MySQL..."
-    - echo "SELECT 'OK';" | mysql --user="$MYSQL_USER" --password="$MYSQL_PASSWORD" --host="mysql" "$MYSQL_DATABASE"
+    - mysql --user="$MYSQL_USER" --password="$MYSQL_PASSWORD" --host="mysql" -e "SELECT 'OK';"
 
 test:mysql:
   script:
-    - echo "📂 Vérification du fichier phpunitPDO.xml..."
-    - if [ ! -f phpunitPDO.xml ]; then echo "❌ ERREUR : Le fichier phpunitPDO.xml est manquant !" && exit 1; fi
+    - echo "Vérification du fichier phpunitPDO.xml"
+    - if [ ! -f phpunitPDO.xml ]; then echo "ERREUR : Le fichier phpunitPDO.xml est manquant !" && exit 1; fi
     - chmod +x vendor/bin/phpunit
-    - echo "🛠️ Lancement des tests PHPUnit..."
+    - echo "Lancement des tests PHPUnit"
     - vendor/bin/phpunit --configuration phpunitPDO.xml --coverage-text
