@@ -37,7 +37,8 @@ connect:
 
 test:mysql:
   script:
-    - chmod +x vendor/bin/phpunit
+    - mkdir -p var/cache/test
+    - chmod -R 777 var/cache/test
     - vendor/bin/phpunit --configuration phpunit.xml.dist --coverage-text
 
 deploy:
