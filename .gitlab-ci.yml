@@ -13,7 +13,7 @@ variables:
   MYSQL_USER: tima6358_amina
   MYSQL_PASSWORD: "alanTuring2024!"
   DATABASE_URL: "mysql://tima6358_amina:alanTuring2024%21@mysql:3306/tima6358_amina?serverVersion=10.6.21-MariaDB&charset=utf8mb4"
-  KERNEL_CLASS: "App\Kernel"
+  KERNEL_CLASS: "App\ Kernel"
 
 before_script:
   - apt-get update -yqq
