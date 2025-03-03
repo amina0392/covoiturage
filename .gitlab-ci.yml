@@ -8,6 +8,7 @@ services:
   - mysql
 
 variables:
+  GIT_DEPTH: "0"
   MYSQL_DATABASE: tima6358_amina
   MYSQL_ROOT_PASSWORD: "alanTuring2024!"
   MYSQL_USER: tima6358_amina
@@ -16,6 +17,7 @@ variables:
   KERNEL_CLASS: "App\ Kernel"
 
 before_script:
+  - rm -f .git/shallow.lock
   - apt-get update -yqq
   - apt-get install git libzip-dev zip -yqq
   - docker-php-ext-install pdo_mysql zip
