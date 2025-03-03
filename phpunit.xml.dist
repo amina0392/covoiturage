@@ -11,7 +11,13 @@
     <php>
         <ini name="display_errors" value="1" />
         <ini name="error_reporting" value="-1" />
+        
+        <!-- ✅ Ajout de KERNEL_CLASS -->
+        <server name="KERNEL_CLASS" value="App\Kernel" />
         <server name="APP_ENV" value="test" force="true" />
+        <server name="APP_DEBUG" value="1" />
+        <server name="DATABASE_URL" value="mysql://tima6358_amina:alanTuring2024!@mysql:3306/tima6358_amina?serverVersion=10.6.21-MariaDB&charset=utf8mb4" />
+
         <server name="SHELL_VERBOSITY" value="-1" />
         <server name="SYMFONY_PHPUNIT_REMOVE" value="" />
         <server name="SYMFONY_PHPUNIT_VERSION" value="9.5" />
