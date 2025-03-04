@@ -6,7 +6,11 @@
          bootstrap="tests/bootstrap.php"
          convertDeprecationsToExceptions="false"
          stopOnFailure="false">
-    
+    <coverage processUncoveredFiles="true">
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+    </coverage>
     <php>
         <env name="KERNEL_CLASS" value="App\Kernel"/>
         <ini name="display_errors" value="1" />
