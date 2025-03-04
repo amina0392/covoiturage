@@ -11,13 +11,13 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest  # Vous pouvez aussi choisir un autre OS comme macos-latest ou windows-latest
-    
+
     services:
       mysql:
-        image: mysql:8.4  
+        image: mysql:8.4
         env:
           MYSQL_ROOT_PASSWORD: "alanTuring2024!"
-          MYSQL_DATABASE: "tima6358_amina_test"
+          MYSQL_DATABASE: "tima6358_amina"
         ports:
           - 3306:3306
         options: >-
@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3  # Mise à jour vers v3 de l'action de checkout
+        uses: actions/checkout@v3
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -43,22 +43,60 @@ jobs:
 
       - name: Wait for MySQL service to be ready
         run: |
-          while ! mysqladmin ping -h"mysql" --silent; do
+          while ! mysqladmin ping -h"localhost" --silent; do
             echo "Waiting for MySQL to be ready..."
             sleep 3
           done
 
       - name: Set up environment variables for tests
         run: |
-          echo "DATABASE_URL=mysql://tima6358_amina_test:alanTuring2024!@localhost:3306/tima6358_amina_test" >> $GITHUB_ENV
+          echo "DATABASE_URL=mysql://tima6358_amina:alanTuring2024!@localhost:3306/tima6358_amina" >> $GITHUB_ENV
+
+      - name: Create test tables if not exists
+        run: |
+          echo "Creating test tables..."
+          mysql -h mysql -u root -p$MYSQL_ROOT_PASSWORD tima6358_amina -e "
+          CREATE TABLE IF NOT EXISTS test_reservation (
+            id_reservation INT AUTO_INCREMENT PRIMARY KEY,
+            id_utilisateur INT,
+            id_trajet INT,
+            statut VARCHAR(255) NOT NULL,
+            date_reservation DATETIME DEFAULT CURRENT_TIMESTAMP
+          );
+          CREATE TABLE IF NOT EXISTS test_utilisateur (
+            id_utilisateur INT AUTO_INCREMENT PRIMARY KEY,
+            nom VARCHAR(200) NOT NULL,
+            prenom VARCHAR(200) NOT NULL,
+            email VARCHAR(200) NOT NULL,
+            mot_de_passe VARCHAR(60) NOT NULL
+          );
+          CREATE TABLE IF NOT EXISTS test_trajet (
+            id_trajet INT AUTO_INCREMENT PRIMARY KEY,
+            id_utilisateur INT NOT NULL,
+            date_heure DATETIME NOT NULL,
+            places_restantes INT NOT NULL,
+            detail_trajet LONGTEXT DEFAULT NULL,
+            id_ville_depart INT NOT NULL,
+            id_ville_arrivee INT NOT NULL
+          );
+          "
 
       - name: Run PHPUnit tests
         run: |
           chmod +x vendor/bin/phpunit
           vendor/bin/phpunit --configuration phpunit.xml.dist --coverage-text
 
+      - name: Clean up test tables
+        run: |
+          echo "Cleaning up test tables..."
+          mysql -h mysql -u root -p$MYSQL_ROOT_PASSWORD tima6358_amina -e "
+          DROP TABLE IF EXISTS test_reservation;
+          DROP TABLE IF EXISTS test_utilisateur;
+          DROP TABLE IF EXISTS test_trajet;
+          "
+
       - name: Upload PHPUnit coverage results
-        uses: actions/upload-artifact@v4  # Mise à jour vers v4 pour éviter la dépréciation
+        uses: actions/upload-artifact@v4
         with:
           name: phpunit-coverage
           path: coverage/
