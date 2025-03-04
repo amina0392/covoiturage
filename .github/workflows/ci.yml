@@ -3,20 +3,20 @@ name: CI Pipeline
 on:
   push:
     branches:
-      - main  # ou une autre branche selon votre configuration
+      - main
   pull_request:
     branches:
-      - main  # ou une autre branche selon votre configuration
+      - main
 
 jobs:
   test:
-    runs-on: ubuntu-latest  # Vous pouvez aussi choisir un autre OS comme macos-latest ou windows-latest
+    runs-on: ubuntu-latest
 
     services:
       mysql:
         image: mysql:8.4
         env:
-          MYSQL_ROOT_PASSWORD: "alanTuring2024!"
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
           MYSQL_DATABASE: "tima6358_amina"
         ports:
           - 3306:3306
@@ -43,14 +43,21 @@ jobs:
 
       - name: Wait for MySQL service to be ready
         run: |
-          while ! mysqladmin ping -h"localhost" --silent; do
+          echo "Waiting for MySQL to be ready..."
+          timeout=30
+          while ! mysqladmin ping -h"mysql" --silent; do
+            if [ $timeout -le 0 ]; then
+              echo "MySQL service did not start in time!"
+              exit 1
+            fi
             echo "Waiting for MySQL to be ready..."
             sleep 3
+            timeout=$((timeout-3))
           done
 
       - name: Set up environment variables for tests
         run: |
-          echo "DATABASE_URL=mysql://tima6358_amina:alanTuring2024!@localhost:3306/tima6358_amina" >> $GITHUB_ENV
+          echo "DATABASE_URL=mysql://tima6358_amina:alanTuring2024!@mysql:3306/tima6358_amina" >> $GITHUB_ENV
 
       - name: Create test tables if not exists
         run: |
@@ -96,7 +103,7 @@ jobs:
           "
 
       - name: Upload PHPUnit coverage results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: phpunit-coverage
           path: coverage/
