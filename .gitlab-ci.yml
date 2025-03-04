@@ -23,6 +23,8 @@ variables:
   DATABASE_URL: "mysql://tima6358_amina:alanTuring2024%21@mysql:3306/tima6358_amina?serverVersion=10.6.21-MariaDB&charset=utf8mb4"
 
 before_script:
+  - mysql --version
+  - php composer.phar update doctrine/doctrine-bundle doctrine/orm --with-dependencies
   - apt-get update -yqq
   - apt-get install git unzip libzip-dev zip -yqq
   - docker-php-ext-install pdo_mysql zip
