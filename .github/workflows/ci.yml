@@ -10,21 +10,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-
-    services:
-      mysql:
-        image: mysql:8.4
-        env:
-          MYSQL_ROOT_PASSWORD: "alanTuring2024!"
-          MYSQL_DATABASE: "tima6358_amina"
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping --silent"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
+    runs-on: ubuntu-latest  # Vous pouvez aussi choisir un autre OS comme macos-latest ou windows-latest
 
     steps:
       - name: Checkout code
@@ -41,66 +27,16 @@ jobs:
           curl -sS https://getcomposer.org/installer | php
           php composer.phar install --no-interaction
 
-      - name: Wait for MySQL service to be ready
+      - name: Set up SQLite for testing
         run: |
-          echo "Waiting for MySQL to be ready..."
-          timeout=30
-          while ! mysqladmin ping -h"mysql" --silent; do
-            if [ $timeout -le 0 ]; then
-              echo "MySQL service did not start in time!"
-              exit 1
-            fi
-            echo "Waiting for MySQL to be ready..."
-            sleep 3
-            timeout=$((timeout-3))
-          done
-
-      - name: Set up environment variables for tests
-        run: |
-          echo "DATABASE_URL=mysql://tima6358_amina:alanTuring2024!@mysql:3306/tima6358_amina" >> $GITHUB_ENV
-
-      - name: Create test tables if not exists
-        run: |
-          echo "Creating test tables..."
-          mysql -h mysql -u root -p$MYSQL_ROOT_PASSWORD tima6358_amina -e "
-          CREATE TABLE IF NOT EXISTS test_reservation (
-            id_reservation INT AUTO_INCREMENT PRIMARY KEY,
-            id_utilisateur INT,
-            id_trajet INT,
-            statut VARCHAR(255) NOT NULL,
-            date_reservation DATETIME DEFAULT CURRENT_TIMESTAMP
-          );
-          CREATE TABLE IF NOT EXISTS test_utilisateur (
-            id_utilisateur INT AUTO_INCREMENT PRIMARY KEY,
-            nom VARCHAR(200) NOT NULL,
-            prenom VARCHAR(200) NOT NULL,
-            email VARCHAR(200) NOT NULL,
-            mot_de_passe VARCHAR(60) NOT NULL
-          );
-          CREATE TABLE IF NOT EXISTS test_trajet (
-            id_trajet INT AUTO_INCREMENT PRIMARY KEY,
-            id_utilisateur INT NOT NULL,
-            date_heure DATETIME NOT NULL,
-            places_restantes INT NOT NULL,
-            detail_trajet LONGTEXT DEFAULT NULL,
-            id_ville_depart INT NOT NULL,
-            id_ville_arrivee INT NOT NULL
-          );
-          "
+          echo "DATABASE_URL=sqlite:///%kernel.project_dir%/var/test.db" >> $GITHUB_ENV
+          # Optionnel: Nettoyer la base de données SQLite avant chaque exécution des tests
+          rm -f var/test.db
 
       - name: Run PHPUnit tests
         run: |
           chmod +x vendor/bin/phpunit
           vendor/bin/phpunit --configuration phpunit.xml.dist --coverage-text
-
-      - name: Clean up test tables
-        run: |
-          echo "Cleaning up test tables..."
-          mysql -h mysql -u root -p$MYSQL_ROOT_PASSWORD tima6358_amina -e "
-          DROP TABLE IF EXISTS test_reservation;
-          DROP TABLE IF EXISTS test_utilisateur;
-          DROP TABLE IF EXISTS test_trajet;
-          "
 
       - name: Upload PHPUnit coverage results
         uses: actions/upload-artifact@v4
