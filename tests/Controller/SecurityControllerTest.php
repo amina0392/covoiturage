@@ -1,8 +1,7 @@
 <?php
 namespace App\Tests\Controller;
 
-// tests/bootstrap.php
-require dirname(__DIR__).'/vendor/autoload.php';
+
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class SecurityControllerTest extends WebTestCase

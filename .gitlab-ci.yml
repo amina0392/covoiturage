@@ -1,8 +1,9 @@
-image: registry.gitlab.com/symfony/symfony-cli:stable
+image: php:8.2
 
 stages:
   - test
   - sonarqube
+  - sonarqube-check
   - deploy
 
 cache:
@@ -15,13 +16,18 @@ cache:
 services:
   - name: mysql:8.4
     alias: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "alanTuring2024!"  # Mot de passe root pour MySQL
+      MYSQL_DATABASE: "tima6358_amina_test"   # Base de données à créer
+      MYSQL_USER: "tima6358_amina"            # Utilisateur pour la base de données
+      MYSQL_PASSWORD: "alanTuring2024!"       # Mot de passe de l'utilisateur
 
 variables:
-  MYSQL_DATABASE: tima6358_amina_test  # Nouvelle base de données de test
-  MYSQL_USER: test_user
-  MYSQL_PASSWORD: test_password
-  DATABASE_URL: "mysql://test_user:test_password@mysql:3306/tima6358_amina_test?serverVersion=10.6.21-MariaDB&charset=utf8mb4"
-
+  MYSQL_DATABASE: tima6358_amina_test
+  MYSQL_ROOT_PASSWORD: "alanTuring2024!"
+  MYSQL_USER: tima6358_amina
+  MYSQL_PASSWORD: "alanTuring2024!"
+  DATABASE_URL: "mysql://tima6358_amina:alanTuring2024!@mysql:3306/tima6358_amina_test?serverVersion=10.6.21-MariaDB&charset=utf8mb4"
 
 before_script:
   - apt-get update -yqq
@@ -30,13 +36,8 @@ before_script:
   - curl -sS https://getcomposer.org/installer | php
   - php composer.phar install --no-interaction
   - apt-get install -y default-mysql-client
-
-  # Créez la base de données de test et chargez les fixtures
-  - php bin/console doctrine:database:create --if-not-exists --no-interaction
-  - php bin/console doctrine:schema:update --force --no-interaction
-  - php bin/console doctrine:fixtures:load --no-interaction
-
  
+
 connect:
   script:
     - while ! mysqladmin ping -h"mysql" --silent; do sleep 1; done
@@ -67,6 +68,16 @@ sonarqube:
     - sonar-scanner
   allow_failure: true
 
+sonarqube-check:
+  stage: test
+  image:
+    name: sonarsource/sonar-scanner-cli:5.0
+    entrypoint: [""]
+  script:
+    - sonar-scanner -Dsonar.projectKey=covoiturage -Dsonar.sources=src -Dsonar.host.url=http://your-sonar-instance-url -Dsonar.login=$SONAR_TOKEN
+  only:
+    - main
+    - merge_requests
 
 
 deploy:
