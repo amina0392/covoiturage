@@ -11,6 +11,7 @@ cache:
     - vendor/
     - .composer/cache/
 
+# Configuration des services
 services:
   - mysql
 
@@ -27,8 +28,8 @@ before_script:
   - docker-php-ext-install pdo_mysql zip
   - curl -sS https://getcomposer.org/installer | php
   - php composer.phar install --no-interaction --prefer-dist
-  - mkdir -p var/cache/test var/log
-  - chmod -R 777 var/cache/test var/log
+  - apt-get install -y default-mysql-client
+ 
 
 connect:
   script:
