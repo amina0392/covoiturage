@@ -57,7 +57,7 @@ jobs:
           vendor/bin/phpunit --configuration phpunit.xml.dist --coverage-text
 
       - name: Upload PHPUnit coverage results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: phpunit-coverage
           path: coverage/
