@@ -1,12 +1,16 @@
-# Select image from https://hub.docker.com/_/php/
 image: php:8.2
 
-# Select what we should cache
+stages:
+  - test
+  - sonarqube
+  - deploy
+
 cache:
+  key: composer
   paths:
     - vendor/
+    - .composer/cache/
 
-# Configuration des services
 services:
   - mysql
 
@@ -15,62 +19,51 @@ variables:
   MYSQL_ROOT_PASSWORD: "alanTuring2024!"
   MYSQL_USER: tima6358_amina
   MYSQL_PASSWORD: "alanTuring2024!"
-  DATABASE_URL: "mysql://tima6358_amina:alanTuring2024%21@greta-bretagne-sud.org:3306/tima6358_amina?serverVersion=10.6.21-MariaDB&charset=utf8mb4"
+  DATABASE_URL: "mysql://tima6358_amina:alanTuring2024%21@mysql:3306/tima6358_amina?serverVersion=10.6.21-MariaDB&charset=utf8mb4"
 
-
-# Étapes à exécuter avant les scripts de test
 before_script:
-  # Mise à jour et installation des dépendances dans l'image PHP
   - apt-get update -yqq
-  - apt-get install git libzip-dev zip -yqq
+  - apt-get install git unzip libzip-dev zip -yqq
   - docker-php-ext-install pdo_mysql zip
   - curl -sS https://getcomposer.org/installer | php
-  - php composer.phar update
-  - php composer.phar install
-  - apt-get install -y default-mysql-client
+  - php composer.phar install --no-interaction --prefer-dist
+  - mkdir -p var/cache/test var/log
+  - chmod -R 777 var/cache/test var/log
 
-# Script de connexion pour vérifier la connexion MySQL
 connect:
   script:
     - while ! mysqladmin ping -h"mysql" --silent; do sleep 1; done
-    - mysql --user=root --password="$MYSQL_ROOT_PASSWORD" --host="mysql" -e "CREATE USER IF NOT EXISTS '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD';"
+    - mysql --user=root --password="$MYSQL_ROOT_PASSWORD" --host="mysql" -e "CREATE USER IF NOT EXISTS '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';"
     - mysql --user=root --password="$MYSQL_ROOT_PASSWORD" --host="mysql" -e "GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%'; FLUSH PRIVILEGES;"
-    - echo "SELECT 'OK';" | mysql --user="$MYSQL_USER" --password="$MYSQL_ROOT_PASSWORD" --host="mysql" "$MYSQL_DATABASE"
+    - echo "SELECT 'OK';" | mysql --user="$MYSQL_USER" --password="$MYSQL_PASSWORD" --host="mysql" "$MYSQL_DATABASE"
 
-# Tests avec MySQL
-test:mysql:
+test:
+  stage: test
   script:
+    - php bin/console doctrine:database:create --if-not-exists --no-interaction
+    - php bin/console doctrine:schema:update --force --no-interaction
+    - php bin/console doctrine:fixtures:load --no-interaction
     - chmod +x vendor/bin/phpunit
-    - vendor/bin/phpunit --configuration phpunitPDO.xml --coverage-text
+    - vendor/bin/phpunit --configuration phpunit.xml.dist --coverage-text
+  artifacts:
+    paths:
+      - coverage/
+    expire_in: 1 day
 
-# Tests avec PHP 7.4 et MySQL
-test:php7.4:mysql:
-  image: php:7.4
-  before_script:
-    - apt-get update -yqq
-    - apt-get install git libzip-dev zip -yqq
-    - docker-php-ext-install pdo_mysql zip
-    - curl -sS https://getcomposer.org/installer | php
-    - php -v
-    - php composer.phar self-update
-    - php composer.phar update
-    - php composer.phar install
-    - apt-get install -y default-mysql-client
+sonarqube:
+  stage: sonarqube
+  image: sonarsource/sonar-scanner-cli:5.0
+  variables:
+    SONAR_HOST_URL: "http://51.91.13.217:9000"
+    SONAR_TOKEN: "sqp_6cb72efdfbb19ce8f60e09b32d522a1a7077ad15"
   script:
-    - vendor/bin/phpunit --configuration phpunitPDO.xml --coverage-text
+    - sonar-scanner
+  allow_failure: true
 
-# Tests avec PHP 8.0 et MySQL
-test:php8.0:mysql:
-  image: php:8.0
-  before_script:
-    - apt-get update -yqq
-    - apt-get install git libzip-dev zip -yqq
-    - docker-php-ext-install pdo_mysql zip
-    - curl -sS https://getcomposer.org/installer | php
-    - php -v
-    - php composer.phar self-update
-    - php composer.phar update
-    - php composer.phar install
-    - apt-get install -y default-mysql-client
+deploy:
+  stage: deploy
+  only:
+    - main
   script:
-    - vendor/bin/phpunit --configuration phpunitPDO.xml --coverage-text
+    - apt-get update -qq && apt-get install -y -qq lftp
+    - lftp -c "set ftp:ssl-allow no; open -u $USERNAME,$PASSWORD $HOST; mirror -Rv ./ --ignore-time --parallel=10 --exclude .git/"
