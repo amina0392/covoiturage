@@ -1,0 +1,64 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main  # ou une autre branche selon votre configuration
+  pull_request:
+    branches:
+      - main  # ou une autre branche selon votre configuration
+
+jobs:
+  test:
+    runs-on: ubuntu-latest  # Vous pouvez aussi choisir un autre OS comme macos-latest ou windows-latest
+    
+    services:
+      mysql:
+        image: mysql:8.4  # Vous pouvez choisir la version de MySQL qui vous convient
+        env:
+          MYSQL_ROOT_PASSWORD: "alanTuring2024!"
+          MYSQL_DATABASE: "tima6358_amina_test"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mysqli, pdo_mysql, zip, mbstring
+
+      - name: Install Composer dependencies
+        run: |
+          curl -sS https://getcomposer.org/installer | php
+          php composer.phar install --no-interaction
+
+      - name: Wait for MySQL service to be ready
+        run: |
+          while ! mysqladmin ping -h"localhost" --silent; do
+            sleep 1
+          done
+
+      - name: Set up environment variables for tests
+        run: |
+          echo "DATABASE_URL=mysql://tima6358_amina_test:alanTuring2024!@localhost:3306/tima6358_amina_test" >> $GITHUB_ENV
+
+      - name: Run PHPUnit tests
+        run: |
+          chmod +x vendor/bin/phpunit
+          vendor/bin/phpunit --configuration phpunit.xml.dist --coverage-text
+
+      - name: Upload PHPUnit coverage results
+        uses: actions/upload-artifact@v2
+        with:
+          name: phpunit-coverage
+          path: coverage/
+
