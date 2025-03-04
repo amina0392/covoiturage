@@ -16,11 +16,7 @@ cache:
 services:
   - name: mysql:8.4
     alias: mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: "alanTuring2024!"  # Mot de passe root pour MySQL
-      MYSQL_DATABASE: "tima6358_amina_test"   # Base de données à créer
-      MYSQL_USER: "tima6358_amina"            # Utilisateur pour la base de données
-      MYSQL_PASSWORD: "alanTuring2024!"       # Mot de passe de l'utilisateur
+  
 
 variables:
   MYSQL_DATABASE: tima6358_amina_test
