@@ -16,7 +16,7 @@ jobs:
       mysql:
         image: mysql:8.4
         env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          MYSQL_ROOT_PASSWORD: "alanTuring2024!"
           MYSQL_DATABASE: "tima6358_amina"
         ports:
           - 3306:3306
