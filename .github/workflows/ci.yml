@@ -14,7 +14,7 @@ jobs:
     
     services:
       mysql:
-        image: mysql:8.4  # Vous pouvez choisir la version de MySQL qui vous convient
+        image: mysql:8.4  
         env:
           MYSQL_ROOT_PASSWORD: "alanTuring2024!"
           MYSQL_DATABASE: "tima6358_amina_test"
