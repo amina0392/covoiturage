@@ -43,8 +43,9 @@ jobs:
 
       - name: Wait for MySQL service to be ready
         run: |
-          while ! mysqladmin ping -h"localhost" --silent; do
-            sleep 1
+          while ! mysqladmin ping -h"mysql" --silent; do
+            echo "Waiting for MySQL to be ready..."
+            sleep 3
           done
 
       - name: Set up environment variables for tests
