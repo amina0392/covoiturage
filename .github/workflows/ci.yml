@@ -1,12 +1,6 @@
-name: CI Pipeline
+name: Run Symfony Tests with SQLite
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+on: [push, pull_request]
 
 jobs:
   test:
@@ -20,41 +14,25 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: mysqli, pdo_mysql, zip, mbstring
+          extensions: sqlite3, pdo_sqlite, zip, mbstring
 
-      - name: Install Composer dependencies
-        run: |
-          curl -sS https://getcomposer.org/installer | php
-          php composer.phar install --no-interaction
+      - name: Configure DATABASE_URL for SQLite
+        run: echo "DATABASE_URL=sqlite:///%kernel.project_dir%/var/data.db" >> $GITHUB_ENV
 
-      - name: Set up MySQL environment variables
-        run: |
-          echo "DATABASE_URL=mysql://tima6358_amina:alanTuring2024!@greta-bretagne-sud.org:3306/tima6358_amina" >> $GITHUB_ENV
+      - name: Install dependencies
+        run: composer install --no-interaction
 
-      - name: Préparation des tables de test
-        run: |
-          echo "Création des tables de test..."
-          mysql -h greta-bretagne-sud.org -u tima6358_amina -palanTuring2024! tima6358_amina -e "
-          DROP TABLE IF EXISTS test_utilisateur, test_reservation, test_trajet;
-          CREATE TABLE test_utilisateur AS SELECT * FROM utilisateur WHERE 1=0;
-          CREATE TABLE test_reservation AS SELECT * FROM reservation WHERE 1=0;
-          CREATE TABLE test_trajet AS SELECT * FROM trajet WHERE 1=0;
-          "
+      - name: Remove old migrations
+        run: rm -rf migrations/*
+
+      - name: Create new migration
+        run: php bin/console doctrine:migrations:diff --env=test
+
+      - name: Run migrations
+        run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
+
+      - name: Load test data (fixtures)
+        run: php bin/console doctrine:fixtures:load --no-interaction --env=test
 
       - name: Run PHPUnit tests
-        run: |
-          chmod +x vendor/bin/phpunit
-          vendor/bin/phpunit --configuration phpunit.xml.dist --coverage-text
-
-      - name: Nettoyage après tests
-        run: |
-          echo "Suppression des tables de test..."
-          mysql -h greta-bretagne-sud.org -u tima6358_amina -palanTuring2024! tima6358_amina -e "
-          DROP TABLE IF EXISTS test_utilisateur, test_reservation, test_trajet;
-          "
-
-      - name: Upload PHPUnit coverage results
-        uses: actions/upload-artifact@v4
-        with:
-          name: phpunit-coverage
-          path: coverage/
+        run: vendor/bin/phpunit --coverage-text
