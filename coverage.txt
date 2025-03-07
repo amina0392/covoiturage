@@ -1,0 +1,14 @@
+
+
+Code Coverage Report:    
+  2025-03-07 08:55:26    
+                         
+ Summary:                
+  Classes:  0.00% (0/20) 
+  Methods:  6.12% (6/98) 
+  Lines:    1.23% (6/487)
+
+App\Entity\Role
+  Methods:  33.33% ( 1/ 3)   Lines:  25.00% (  1/  4)
+App\Entity\Utilisateur
+  Methods:  27.78% ( 5/18)   Lines:  18.52% (  5/ 27)

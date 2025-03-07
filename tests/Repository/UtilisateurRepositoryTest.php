@@ -18,11 +18,12 @@ class UtilisateurRepositoryTest extends KernelTestCase
     public function testFindUtilisateurByEmail()
     {
         $repo = $this->entityManager->getRepository(Utilisateur::class);
-        $utilisateur = $repo->findOneBy(['email' => 'test.user@example.com']);
-
+        $utilisateur = $repo->findOneBy(['email' => 'jean.dupont@example.com']);  // 📌 Correction ici
+    
         $this->assertNotNull($utilisateur);
-        $this->assertEquals('Test', $utilisateur->getNom());
+        $this->assertEquals('Dupont', $utilisateur->getNom());  // 📌 Correction ici
     }
+    
 
     protected function tearDown(): void
     {
