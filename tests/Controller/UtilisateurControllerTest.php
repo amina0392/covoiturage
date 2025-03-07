@@ -32,8 +32,8 @@ final class UtilisateurControllerTest extends WebTestCase
                 'prenom' => 'User',
                 'email' => $this->userEmail,
                 'motDePasse' => 'password123',
-                'idRole' => $this->getRoleId('utilisateur'),
-                'idVille' => $this->getVilleId('Paris'),
+                'idRole' => 4,
+                'idVille' => 2
             ])
         );
 

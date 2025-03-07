@@ -60,6 +60,12 @@ jobs:
           echo "🔧 Vérification et ajout des villes..."
           sqlite3 var/test.db "INSERT INTO ville (id_ville, code_postale, nom_commune) VALUES (2, '75001', 'Paris') ON CONFLICT(id_ville) DO NOTHING;"
           echo "✅ Villes vérifiées et ajoutées"
+          
+      - name: Debug Database Content (Check Roles & Villes)
+        run: |
+          echo "🔍 Contenu des rôles et villes après insertion"
+          sqlite3 var/test.db "SELECT * FROM role;"
+          sqlite3 var/test.db "SELECT * FROM ville;"
 
       - name: Load test data (fixtures)
         run: php bin/console doctrine:fixtures:load --no-interaction --env=test || echo "No fixtures available"

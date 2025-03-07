@@ -52,7 +52,11 @@ final class ApiUtilisateurController extends AbstractController
         $ville = $villeRepo->find($data['idVille']);
     
         if (!$role || !$ville) {
-            return new JsonResponse(['error' => 'Rôle ou ville invalide'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse([
+                'error' => 'Rôle ou ville invalide',
+                'idRole' => $data['idRole'],
+                'idVille' => $data['idVille']
+            ], Response::HTTP_BAD_REQUEST);
         }
     
         $user->setRoleEntity($role);
