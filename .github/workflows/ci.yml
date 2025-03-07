@@ -25,6 +25,14 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
+      - name: Configure JWT keys
+        run: |
+          mkdir -p config/jwt
+          echo "${{ secrets.JWT_PRIVATE_KEY }}" > config/jwt/private.pem
+          echo "${{ secrets.JWT_PUBLIC_KEY }}" > config/jwt/public.pem
+          chmod 600 config/jwt/private.pem
+          chmod 644 config/jwt/public.pem
+
       - name: Remove old migrations
         run: rm -rf migrations/*
 
