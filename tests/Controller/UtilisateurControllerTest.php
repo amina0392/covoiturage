@@ -137,27 +137,29 @@ private function debugDatabase(): void
     echo "📌 Villes: " . $villesResponse . "\n";
 }
 
-
-    /**
-     * 🔐 Récupération du Token JWT pour un utilisateur donné
-     */
     private function getToken(string $email): ?string
-    {
-        $this->client->request(
-            'POST',
-            '/api/login_check',
-            [],
-            [],
-            ['CONTENT_TYPE' => 'application/json'],
-            json_encode([
-                'email' => $email,
-                'password' => 'password123',
-            ])
-        );
+{
+    $this->client->request(
+        'POST',
+        '/api/login_check',
+        [],
+        [],
+        ['CONTENT_TYPE' => 'application/json'],
+        json_encode([
+            'email' => $email,
+            'password' => 'password123',
+        ])
+    );
 
-        $response = json_decode($this->client->getResponse()->getContent(), true);
-        return $response['token'] ?? null;
+    $response = json_decode($this->client->getResponse()->getContent(), true);
+
+    if (!isset($response['token'])) {
+        fwrite(STDERR, "❌ Échec de la récupération du Token JWT pour $email. Réponse API: " . print_r($response, true));
+        return null;
     }
+
+    return $response['token'];
+}
 
 
     public function testModificationUtilisateur(): void
