@@ -29,19 +29,36 @@ final class ApiUtilisateurController extends AbstractController
         VilleRepository $villeRepo
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
-
+    
+        // Vérification des champs requis
+        if (!isset($data['nom'], $data['prenom'], $data['email'], $data['motDePasse'], $data['idRole'], $data['idVille'])) {
+            return new JsonResponse(['error' => 'Données invalides'], Response::HTTP_BAD_REQUEST);
+        }
+    
+        // Vérifier si l'email existe déjà
+        $existingUser = $entityManager->getRepository(Utilisateur::class)->findOneBy(['email' => $data['email']]);
+        if ($existingUser) {
+            return new JsonResponse(['error' => 'Email déjà utilisé'], Response::HTTP_CONFLICT);
+        }
+    
         $user = new Utilisateur();
         $user->setNom($data['nom']);
         $user->setPrenom($data['prenom']);
         $user->setEmail($data['email']);
         $user->setPassword($passwordHasher->hashPassword($user, $data['motDePasse']));
-
+    
+        // Assigner le rôle et la ville
         $role = $roleRepo->find($data['idRole']);
         $ville = $villeRepo->find($data['idVille']);
-
+    
+        if (!$role || !$ville) {
+            return new JsonResponse(['error' => 'Rôle ou ville invalide'], Response::HTTP_BAD_REQUEST);
+        }
+    
         $user->setRoleEntity($role);
         $user->setVille($ville);
-
+    
+        // Vérifier et ajouter une voiture si fournie
         if (isset($data['voiture'])) {
             $voitureData = $data['voiture'];
             $voiture = new Voiture();
@@ -49,21 +66,21 @@ final class ApiUtilisateurController extends AbstractController
             $voiture->setModele($voitureData['modele']);
             $voiture->setImmatriculation($voitureData['immatriculation']);
             $voiture->setNbPlaces($voitureData['nb_places']);
-
-            
             $voiture->setUtilisateur($user);
             $user->setVoiture($voiture);
-
+    
             $entityManager->persist($voiture);
         }
-
+    
         $entityManager->persist($user);
-        $entityManager->flush(); 
-
-        return new JsonResponse(['message' => 'Utilisateur et voiture crÃƒÂ©ÃƒÂ©s avec succÃƒÂ¨s'], Response::HTTP_CREATED);
+        $entityManager->flush();
+    
+        return new JsonResponse([
+            'message' => 'Utilisateur créé avec succès',
+            'id' => $user->getIdUtilisateur() // Ajout de l'ID utilisateur
+        ], Response::HTTP_CREATED);
     }
-
-
+    
     #[Route('/api/utilisateurs', name: 'liste_utilisateurs', methods: ['GET'])]
     public function listeUtilisateurs(UtilisateurRepository $utilisateurRepo): JsonResponse
     {

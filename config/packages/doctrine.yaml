@@ -26,9 +26,6 @@ doctrine:
 when@test:
     doctrine:
         dbal:
-            driver: 'pdo_sqlite'
-            path: '%kernel.project_dir%/var/test.db'
-            memory: false
+            url: 'sqlite:///%kernel.project_dir%/var/test.db'  # Utilisation correcte pour SQLite
             use_savepoints: false
             charset: UTF8
-            url: ''  # Désactiver DATABASE_URL pour éviter que MySQL ou PostgreSQL soit pris à la place
