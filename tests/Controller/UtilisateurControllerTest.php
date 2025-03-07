@@ -18,9 +18,13 @@ final class UtilisateurControllerTest extends WebTestCase
     {
         parent::setUp();
         $this->client = static::createClient();
+
+        // 🔹 Vérification des rôles et villes avant de créer un utilisateur
+        $this->debugDatabase();
+
         $this->userEmail = 'test.user' . time() . '@example.com';
 
-        // 🔹 Création d’un utilisateur
+        // 🔹 Création d’un utilisateur standard (ROLE_UTILISATEUR)
         $this->client->request(
             'POST',
             '/api/utilisateur',
@@ -32,19 +36,19 @@ final class UtilisateurControllerTest extends WebTestCase
                 'prenom' => 'User',
                 'email' => $this->userEmail,
                 'motDePasse' => 'password123',
-                'idRole' => 2, // Rôle utilisateur
-                'idVille' => 1 // Ville Paris
+                'idRole' => 2, // 📌 Rôle utilisateur
+                'idVille' => 1  // 📌 Ville Paris
             ])
         );
 
         // 🔹 Vérification et affichage de la réponse
         $responseContent = json_decode($this->client->getResponse()->getContent(), true);
-        fwrite(STDERR, print_r($responseContent, true)); // LOG pour voir la réponse dans PHPUnit
+        fwrite(STDERR, "📌 Réponse création utilisateur : " . print_r($responseContent, true));
 
         $this->userId = $responseContent['id'] ?? null;
         $this->assertNotNull($this->userId, '❌ ID utilisateur non récupéré après inscription');
 
-        // 🔹 Récupération du Token JWT
+        // 🔹 Récupération du Token JWT pour l'utilisateur
         $this->token = $this->getToken($this->userEmail);
         $this->assertNotNull($this->token, '❌ Échec de la récupération du token JWT');
 
@@ -61,21 +65,42 @@ final class UtilisateurControllerTest extends WebTestCase
                 'prenom' => 'User',
                 'email' => $adminEmail,
                 'motDePasse' => 'password123',
-                'idRole' => 1, // Admin
+                'idRole' => 1, // 📌 Rôle Admin
                 'idVille' => 1
             ])
         );
 
+        // 🔹 Vérification et affichage de la réponse Admin
         $adminResponse = json_decode($this->client->getResponse()->getContent(), true);
-        fwrite(STDERR, print_r($adminResponse, true)); // LOG pour voir la réponse Admin
+        fwrite(STDERR, "📌 Réponse création admin : " . print_r($adminResponse, true));
 
         $this->adminId = $adminResponse['id'] ?? null;
         $this->assertNotNull($this->adminId, '❌ ID admin non récupéré après inscription');
 
+        // 🔹 Récupération du Token JWT pour l'admin
         $this->adminToken = $this->getToken($adminEmail);
         $this->assertNotNull($this->adminToken, '❌ Échec de la récupération du token admin');
     }
 
+    /**
+     * 🔍 Vérification des rôles et villes avant les tests
+     */
+    private function debugDatabase(): void
+    {
+        echo "\n🔍 Vérification des rôles et villes dans la base de données:\n";
+
+        $this->client->request('GET', '/api/roles');
+        $rolesResponse = $this->client->getResponse()->getContent();
+        echo "📌 Rôles: " . $rolesResponse . "\n";
+
+        $this->client->request('GET', '/api/villes');
+        $villesResponse = $this->client->getResponse()->getContent();
+        echo "📌 Villes: " . $villesResponse . "\n";
+    }
+
+    /**
+     * 🔐 Récupération du Token JWT pour un utilisateur donné
+     */
     private function getToken(string $email): ?string
     {
         $this->client->request(
@@ -91,10 +116,9 @@ final class UtilisateurControllerTest extends WebTestCase
         );
 
         $response = json_decode($this->client->getResponse()->getContent(), true);
-        fwrite(STDERR, print_r($response, true)); // LOG pour voir la réponse de login
-
         return $response['token'] ?? null;
     }
+
 
     public function testModificationUtilisateur(): void
     {
