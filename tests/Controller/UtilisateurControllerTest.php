@@ -14,77 +14,77 @@ final class UtilisateurControllerTest extends WebTestCase
     private ?int $adminId = null;
     private ?string $userEmail = null;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->client = static::createClient();
-        $this->userEmail = 'test.user' . time() . '@example.com';
-    
-        // 🔹 Création d’un utilisateur classique
-        $this->client->request(
-            'POST',
-            '/api/utilisateur',
-            [],
-            [],
-            ['CONTENT_TYPE' => 'application/json'],
-            json_encode([
-                'nom' => 'Test',
-                'prenom' => 'User',
-                'email' => $this->userEmail,
-                'motDePasse' => 'password123',
-                'idRole' => 2, // Rôle utilisateur
-                'idVille' => 1 // Ville Paris
-            ])
-        );
-    
-        // 🔹 Vérification de la réponse
-        $responseContent = json_decode($this->client->getResponse()->getContent(), true);
-        fwrite(STDERR, "📌 Réponse création utilisateur : " . print_r($responseContent, true));
-    
-        $this->userId = $responseContent['id'] ?? null;
-        $this->assertNotNull($this->userId, '❌ ID utilisateur non récupéré après inscription');
-    
-        // 🔹 Récupération du Token JWT
-        $this->token = $this->getToken($this->userEmail);
-        $this->assertNotNull($this->token, '❌ Échec de la récupération du token JWT');
-    
-        // 🔹 Création d’un admin pour tester la liste des utilisateurs
-        $adminEmail = 'admin.test' . time() . '@example.com';
-        $this->client->request(
-            'POST',
-            '/api/utilisateur',
-            [],
-            [],
-            ['CONTENT_TYPE' => 'application/json'],
-            json_encode([
-                'nom' => 'Admin',
-                'prenom' => 'User',
-                'email' => $adminEmail,
-                'motDePasse' => 'password123',
-                'idRole' => 1, // Admin
-                'idVille' => 1
-            ])
-        );
-    
-        // 🔹 Vérification et récupération de l'ID admin
-        $adminResponse = json_decode($this->client->getResponse()->getContent(), true);
-        fwrite(STDERR, "📌 Réponse création admin : " . print_r($adminResponse, true));
-    
-        $this->adminId = $adminResponse['id'] ?? null;
-        $this->assertNotNull($this->adminId, '❌ ID admin non récupéré après inscription');
-    
-        // 🔹 Attendre que l'admin soit bien enregistré en base (SQLite peut avoir un délai)
-        sleep(1); // 🔥 Ajoute une pause pour assurer l'écriture en base
-    
-        // 🔹 Récupération du Token JWT pour l'admin
-        $this->adminToken = $this->getToken($adminEmail);
-        if (!$this->adminToken) {
-            throw new \Exception("❌ Impossible d'obtenir un Token JWT pour un admin temporaire.");
-        }
-    
-        fwrite(STDERR, "✅ Token JWT Admin récupéré : " . $this->adminToken);
+protected function setUp(): void
+{
+    parent::setUp();
+    $this->client = static::createClient();
+    $this->userEmail = 'test.user' . time() . '@example.com';
+
+    // 🔹 Création d’un utilisateur classique
+    $this->client->request(
+        'POST',
+        '/api/utilisateur',
+        [],
+        [],
+        ['CONTENT_TYPE' => 'application/json'],
+        json_encode([
+            'nom' => 'Test',
+            'prenom' => 'User',
+            'email' => $this->userEmail,
+            'motDePasse' => 'password123',
+            'idRole' => 2, // Rôle utilisateur
+            'idVille' => 1 // Ville Paris
+        ])
+    );
+
+    // 🔹 Vérification de la réponse
+    $responseContent = json_decode($this->client->getResponse()->getContent(), true);
+    fwrite(STDERR, "📌 Réponse création utilisateur : " . print_r($responseContent, true));
+
+    $this->userId = $responseContent['id'] ?? null;
+    $this->assertNotNull($this->userId, '❌ ID utilisateur non récupéré après inscription');
+
+    // 🔹 Récupération du Token JWT
+    $this->token = $this->getToken($this->userEmail);
+    $this->assertNotNull($this->token, '❌ Échec de la récupération du token JWT');
+
+    // 🔹 Création d’un admin pour tester la liste des utilisateurs
+    $adminEmail = 'admin.test' . time() . '@example.com';
+    $this->client->request(
+        'POST',
+        '/api/utilisateur',
+        [],
+        [],
+        ['CONTENT_TYPE' => 'application/json'],
+        json_encode([
+            'nom' => 'Admin',
+            'prenom' => 'User',
+            'email' => $adminEmail,
+            'motDePasse' => 'password123',
+            'idRole' => 1, // Admin
+            'idVille' => 1
+        ])
+    );
+
+    // 🔹 Vérification et récupération de l'ID admin
+    $adminResponse = json_decode($this->client->getResponse()->getContent(), true);
+    fwrite(STDERR, "📌 Réponse création admin : " . print_r($adminResponse, true));
+
+    $this->adminId = $adminResponse['id'] ?? null;
+    $this->assertNotNull($this->adminId, '❌ ID admin non récupéré après inscription');
+
+    // 🔹 Attendre que l'admin soit bien enregistré en base (SQLite peut avoir un délai)
+    sleep(1); // 🔥 Ajoute une pause pour assurer l'écriture en base
+
+    // 🔹 Récupération du Token JWT pour l'admin
+    $this->adminToken = $this->getToken($adminEmail);
+    if (!$this->adminToken) {
+        throw new \Exception("❌ Impossible d'obtenir un Token JWT pour un admin temporaire.");
     }
-    
+
+    fwrite(STDERR, "✅ Token JWT Admin récupéré : " . $this->adminToken);
+}
+
 
     /**
  * 🔍 Vérification des rôles et villes avant les tests

@@ -39,12 +39,6 @@ jobs:
       - name: Run migrations
         run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
 
-      - name: Debug Database Content (Check Roles & Villes)
-        run: |
-          echo "🔍 Vérification des rôles et villes dans la base de données"
-          sqlite3 var/test.db "SELECT * FROM role;"
-          sqlite3 var/test.db "SELECT * FROM ville;"
-
       - name: Ensure Required Roles Exist
         run: |
           echo "🔧 Vérification et ajout des rôles..."
@@ -58,14 +52,25 @@ jobs:
           sqlite3 var/test.db "INSERT INTO ville (id_ville, code_postale, nom_commune) VALUES (1, '75001', 'Paris') ON CONFLICT(id_ville) DO NOTHING;"
           echo "✅ Villes vérifiées et ajoutées"
 
-      - name: Debug Database Content (Check Roles & Villes)
+      - name: Debug Database Content (Check Roles & Villes After Insert)
         run: |
-          echo "🔍 Contenu des rôles et villes après insertion"
+          echo "🔍 Vérification finale des rôles et villes"
           sqlite3 var/test.db "SELECT * FROM role;"
           sqlite3 var/test.db "SELECT * FROM ville;"
 
       - name: Load test data (fixtures)
         run: php bin/console doctrine:fixtures:load --no-interaction --env=test || echo "No fixtures available"
+
+      - name: Vérifier la présence des utilisateurs avant les tests
+        run: |
+          echo "🔍 Vérification des utilisateurs en base avant tests"
+          sqlite3 var/test.db "SELECT * FROM utilisateur;"
+
+      - name: Vérifier connexion et récupération du token JWT
+        run: |
+          echo "🔑 Vérification de l'authentification JWT"
+          RESPONSE=$(curl -s -X POST http://localhost/api/login_check -H "Content-Type: application/json" -d '{"email": "admin.test@example.com", "password": "password"}')
+          echo "Réponse JWT : $RESPONSE"
 
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --coverage-text
