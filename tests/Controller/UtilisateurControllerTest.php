@@ -83,20 +83,60 @@ final class UtilisateurControllerTest extends WebTestCase
     }
 
     /**
-     * 🔍 Vérification des rôles et villes avant les tests
-     */
-    private function debugDatabase(): void
-    {
-        echo "\n🔍 Vérification des rôles et villes dans la base de données:\n";
+ * 🔍 Vérification des rôles et villes avant les tests
+ */
+private function debugDatabase(): void
+{
+    echo "\n🔍 Vérification des rôles et villes dans la base de données:\n";
 
-        $this->client->request('GET', '/api/roles');
-        $rolesResponse = $this->client->getResponse()->getContent();
-        echo "📌 Rôles: " . $rolesResponse . "\n";
+    // 🔹 Récupération du Token JWT pour un admin temporaire
+    $adminEmail = 'admin.test' . time() . '@example.com';
+    $this->client->request(
+        'POST',
+        '/api/utilisateur',
+        [],
+        [],
+        ['CONTENT_TYPE' => 'application/json'],
+        json_encode([
+            'nom' => 'AdminTest',
+            'prenom' => 'Test',
+            'email' => $adminEmail,
+            'motDePasse' => 'password123',
+            'idRole' => 1, // 📌 ID Admin
+            'idVille' => 1
+        ])
+    );
 
-        $this->client->request('GET', '/api/villes');
-        $villesResponse = $this->client->getResponse()->getContent();
-        echo "📌 Villes: " . $villesResponse . "\n";
+    $adminResponse = json_decode($this->client->getResponse()->getContent(), true);
+    $adminToken = $this->getToken($adminEmail);
+
+    if (!$adminToken) {
+        throw new \Exception("❌ Impossible d'obtenir un Token JWT pour un admin temporaire.");
     }
+
+    // 🔹 Requête pour récupérer les rôles
+    $this->client->request(
+        'GET',
+        '/api/roles',
+        [],
+        [],
+        ['HTTP_AUTHORIZATION' => 'Bearer ' . $adminToken]
+    );
+    $rolesResponse = $this->client->getResponse()->getContent();
+    echo "📌 Rôles: " . $rolesResponse . "\n";
+
+    // 🔹 Requête pour récupérer les villes
+    $this->client->request(
+        'GET',
+        '/api/villes',
+        [],
+        [],
+        ['HTTP_AUTHORIZATION' => 'Bearer ' . $adminToken]
+    );
+    $villesResponse = $this->client->getResponse()->getContent();
+    echo "📌 Villes: " . $villesResponse . "\n";
+}
+
 
     /**
      * 🔐 Récupération du Token JWT pour un utilisateur donné
