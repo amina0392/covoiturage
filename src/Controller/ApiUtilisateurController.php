@@ -29,28 +29,28 @@ final class ApiUtilisateurController extends AbstractController
         VilleRepository $villeRepo
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
-    
+
         // Vérification des champs requis
         if (!isset($data['nom'], $data['prenom'], $data['email'], $data['motDePasse'], $data['idRole'], $data['idVille'])) {
             return new JsonResponse(['error' => 'Données invalides'], Response::HTTP_BAD_REQUEST);
         }
-    
+
         // Vérifier si l'email existe déjà
         $existingUser = $entityManager->getRepository(Utilisateur::class)->findOneBy(['email' => $data['email']]);
         if ($existingUser) {
             return new JsonResponse(['error' => 'Email déjà utilisé'], Response::HTTP_CONFLICT);
         }
-    
+
         $user = new Utilisateur();
         $user->setNom($data['nom']);
         $user->setPrenom($data['prenom']);
         $user->setEmail($data['email']);
         $user->setPassword($passwordHasher->hashPassword($user, $data['motDePasse']));
-    
+
         // Assigner le rôle et la ville
         $role = $roleRepo->find($data['idRole']);
         $ville = $villeRepo->find($data['idVille']);
-    
+
         if (!$role || !$ville) {
             return new JsonResponse([
                 'error' => 'Rôle ou ville invalide',
@@ -58,10 +58,10 @@ final class ApiUtilisateurController extends AbstractController
                 'idVille' => $data['idVille']
             ], Response::HTTP_BAD_REQUEST);
         }
-    
+
         $user->setRoleEntity($role);
         $user->setVille($ville);
-    
+
         // Vérifier et ajouter une voiture si fournie
         if (isset($data['voiture'])) {
             $voitureData = $data['voiture'];
@@ -72,19 +72,19 @@ final class ApiUtilisateurController extends AbstractController
             $voiture->setNbPlaces($voitureData['nb_places']);
             $voiture->setUtilisateur($user);
             $user->setVoiture($voiture);
-    
+
             $entityManager->persist($voiture);
         }
-    
+
         $entityManager->persist($user);
         $entityManager->flush();
-    
+
         return new JsonResponse([
             'message' => 'Utilisateur créé avec succès',
             'id' => $user->getIdUtilisateur() // Ajout de l'ID utilisateur
         ], Response::HTTP_CREATED);
     }
-    
+
     #[Route('/api/utilisateurs', name: 'liste_utilisateurs', methods: ['GET'])]
     public function listeUtilisateurs(UtilisateurRepository $utilisateurRepo): JsonResponse
     {
@@ -161,10 +161,10 @@ final class ApiUtilisateurController extends AbstractController
         VilleRepository $villeRepo,
         Security $security
     ): JsonResponse {
-       
+
         $utilisateurConnecte = $security->getUser();
 
-      
+
         $utilisateur = $utilisateurRepo->find($id);
         if (!$utilisateur) {
             return new JsonResponse(['error' => 'Utilisateur non trouvÃƒÂ©'], JsonResponse::HTTP_NOT_FOUND);
@@ -194,7 +194,7 @@ final class ApiUtilisateurController extends AbstractController
             }
         }
 
-       
+
         if (isset($data['idRole'])) {
             return new JsonResponse(['error' => 'Modification du rÃƒÂ´le interdite'], JsonResponse::HTTP_FORBIDDEN);
         }
@@ -212,7 +212,7 @@ final class ApiUtilisateurController extends AbstractController
         UtilisateurRepository $utilisateurRepo,
         Security $security
     ): JsonResponse {
-        $currentUser = $security->getUser(); 
+        $currentUser = $security->getUser();
 
         if (!$currentUser) {
             return new JsonResponse(['error' => 'AccÃƒÂ¨s refusÃƒÂ©'], JsonResponse::HTTP_FORBIDDEN);
@@ -232,5 +232,17 @@ final class ApiUtilisateurController extends AbstractController
         $entityManager->flush();
 
         return new JsonResponse(['message' => 'Utilisateur supprimÃƒÂ© avec succÃƒÂ¨s'], JsonResponse::HTTP_OK);
+    }
+
+    #[Route('/api/roles', name: 'liste_roles', methods: ['GET'])]
+    public function listeRoles(RoleRepository $roleRepo): JsonResponse
+    {
+        $roles = $roleRepo->findAll();
+        $data = array_map(fn($role) => [
+            'id_role' => $role->getIdRole(),
+            'nom_role' => $role->getNomRole(),
+        ], $roles);
+
+        return new JsonResponse($data);
     }
 }
