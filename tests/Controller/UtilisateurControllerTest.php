@@ -17,10 +17,10 @@ final class UtilisateurControllerTest extends WebTestCase
         $this->client = static::createClient();
         $this->userEmail = 'test.user' . time() . '@example.com';
 
-        // 🔹 Suppression de l’utilisateur existant avant test
+        // 🔹 Suppression de l’utilisateur s'il existe déjà
         $this->client->request('DELETE', "/api/utilisateur/email/{$this->userEmail}");
 
-        // 🔹 Création d’un utilisateur de test
+        // 🔹 Création d’un utilisateur
         $this->client->request(
             'POST',
             '/api/utilisateur',
@@ -32,21 +32,20 @@ final class UtilisateurControllerTest extends WebTestCase
                 'prenom' => 'User',
                 'email' => $this->userEmail,
                 'motDePasse' => 'password123',
-                'idRole' => 3,
-                'idVille' => 2
+                'idRole' => $this->getRoleId('utilisateur'),
+                'idVille' => $this->getVilleId('Paris'),
             ])
         );
 
+        // 🔹 Vérification de la création
+        $statusCode = $this->client->getResponse()->getStatusCode();
+        $this->assertResponseStatusCodeSame(201, "Erreur création utilisateur : " . $this->client->getResponse()->getContent());
+
         $responseContent = json_decode($this->client->getResponse()->getContent(), true);
-        var_dump($responseContent); // DEBUG : Afficher la réponse pour voir si l'ID est bien là
-
-        if (isset($responseContent['id'])) {
-            $this->userId = $responseContent['id'];
-        }
-
+        $this->userId = $responseContent['id'] ?? null;
         $this->assertNotNull($this->userId, 'ID utilisateur non récupéré après inscription');
 
-        // 🔹 Récupération du Token JWT après création
+        // 🔹 Récupération du Token JWT
         $this->token = $this->getToken();
         $this->assertNotNull($this->token, 'Échec de la récupération du token JWT');
     }
@@ -66,17 +65,39 @@ final class UtilisateurControllerTest extends WebTestCase
         );
 
         $response = json_decode($this->client->getResponse()->getContent(), true);
+        return $response['token'] ?? null;
+    }
 
-        if (!isset($response['token'])) {
-            throw new \Exception('Impossible de récupérer le token JWT. Réponse reçue : ' . json_encode($response));
+    private function getRoleId(string $roleName): int
+    {
+        $roles = [
+            'admin' => 3,
+            'utilisateur' => 4,
+        ];
+
+        if (!isset($roles[$roleName])) {
+            throw new \Exception("Rôle non trouvé : " . $roleName);
         }
 
-        return $response['token'];
+        return $roles[$roleName];
+    }
+
+    private function getVilleId(string $villeName): int
+    {
+        $villes = [
+            'Paris' => 2,
+        ];
+
+        if (!isset($villes[$villeName])) {
+            throw new \Exception("Ville non trouvée : " . $villeName);
+        }
+
+        return $villes[$villeName];
     }
 
     public function testModificationUtilisateur(): void
     {
-        $this->assertNotNull($this->userId, 'ID utilisateur non récupéré après inscription');
+        $this->assertNotNull($this->userId, 'ID utilisateur non récupéré');
 
         $this->client->request(
             'PUT',
@@ -96,9 +117,8 @@ final class UtilisateurControllerTest extends WebTestCase
 
     public function testSuppressionUtilisateur(): void
     {
-        $this->assertNotNull($this->userId, 'ID utilisateur non récupéré après inscription');
+        $this->assertNotNull($this->userId, 'ID utilisateur non récupéré');
 
-        // 🔹 Suppression par ID
         $this->client->request(
             "DELETE",
             "/api/utilisateur/{$this->userId}",
@@ -131,7 +151,6 @@ final class UtilisateurControllerTest extends WebTestCase
         parent::tearDown();
 
         if ($this->userId) {
-            // 🔹 Suppression de l’utilisateur après les tests
             $this->client->request(
                 "DELETE",
                 "/api/utilisateur/{$this->userId}",
