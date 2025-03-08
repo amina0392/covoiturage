@@ -13,7 +13,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.4'
           extensions: sqlite3, pdo_sqlite, zip, mbstring
 
       - name: Configure DATABASE_URL for SQLite
@@ -22,6 +22,7 @@ jobs:
       - name: Create SQLite database directory
         run: |
           echo "🔄 Suppression et recréation du fichier SQLite..."
+          mkdir -p var
           rm -f var/test.db
           touch var/test.db
           chmod 777 var/test.db
