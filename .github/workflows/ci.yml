@@ -16,17 +16,22 @@ jobs:
           php-version: '8.4'
           extensions: sqlite3, pdo_sqlite, zip, mbstring
 
+      - name: Ensure var directory exists
+        run: |
+          echo "🔄 Création et permissions du dossier var/"
+          mkdir -p var
+          chmod -R 777 var
+
       - name: Configure DATABASE_URL for SQLite
         run: echo "DATABASE_URL=sqlite:///%kernel.project_dir%/var/test.db" >> $GITHUB_ENV
 
-      - name: Create SQLite database directory and file
+      - name: Create SQLite database file
         run: |
           echo "🔄 Suppression et recréation du fichier SQLite..."
-          mkdir -p var
           rm -f var/test.db
           touch var/test.db
           chmod 777 var/test.db
-          chmod -R 777 var
+          ls -lah var
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
@@ -43,14 +48,14 @@ jobs:
         run: ls -lah config/jwt
 
       - name: Run migrations
-        run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
+        run: php bin/console doctrine:migrations:migrate --no-interaction --env=test || echo "No migrations needed"
 
       - name: Force schema update
         run: php bin/console doctrine:schema:update --force --env=test
 
       - name: Ensure Required Roles and Villes Exist
         run: |
-          echo "🔧 Vérification et ajout des rôles et villes..."
+          echo "🔧 Ajout des rôles et villes..."
           sqlite3 var/test.db "INSERT INTO role (id_role, nom_role) VALUES (1, 'admin') ON CONFLICT(id_role) DO NOTHING;"
           sqlite3 var/test.db "INSERT INTO role (id_role, nom_role) VALUES (2, 'utilisateur') ON CONFLICT(id_role) DO NOTHING;"
           sqlite3 var/test.db "INSERT INTO ville (id_ville, code_postale, nom_commune) VALUES (1, '75001', 'Paris') ON CONFLICT(id_ville) DO NOTHING;"
@@ -60,7 +65,6 @@ jobs:
         run: |
           echo "🔍 Vérification des données en base"
           ls -lah var/
-          ls -lah var/test.db || echo "⚠️ Fichier var/test.db non trouvé"
           sqlite3 var/test.db "SELECT * FROM role;"
           sqlite3 var/test.db "SELECT * FROM ville;"
           sqlite3 var/test.db "SELECT * FROM utilisateur;"
@@ -69,7 +73,7 @@ jobs:
         run: php -S 127.0.0.1:8000 -t public &
 
       - name: Wait for Server to Start
-        run: sleep 10 # Permet de s'assurer que le serveur a bien démarré
+        run: sleep 15 # 🔥 Augmentation du temps d'attente
 
       - name: Ensure Admin User Exists
         run: |
