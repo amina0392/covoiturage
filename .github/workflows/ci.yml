@@ -19,12 +19,15 @@ jobs:
       - name: Install Symfony CLI
         run: |
           curl -sS https://get.symfony.com/cli/installer | bash
-          export PATH="$HOME/.symfony/bin:$PATH"
-          echo "export PATH=\"$HOME/.symfony/bin:$PATH\"" >> ~/.bashrc
-          echo "export PATH=\"$HOME/.symfony/bin:$PATH\"" >> ~/.profile
+          export PATH="$HOME/.symfony/bin:$HOME/.local/bin:$PATH"
+          echo "export PATH=\"$HOME/.symfony/bin:$HOME/.local/bin:$PATH\"" >> ~/.bashrc
+          echo "export PATH=\"$HOME/.symfony/bin:$HOME/.local/bin:$PATH\"" >> ~/.profile
+          ln -s $HOME/.symfony/bin/symfony /usr/local/bin/symfony
 
       - name: Verify Symfony CLI installation
-        run: symfony -v
+        run: |
+          which symfony || echo "❌ Symfony CLI non trouvé"
+          symfony -v
 
       - name: Ensure var directory exists
         run: |
@@ -79,8 +82,10 @@ jobs:
           sqlite3 var/test.db "SELECT * FROM ville;"
           sqlite3 var/test.db "SELECT * FROM utilisateur;"
 
-      - name: Start Symfony Server (GitHub Actions)
-        run: symfony server:start -d --no-tls
+      - name: Start Symfony Server
+        run: |
+          echo "🚀 Démarrage du serveur Symfony..."
+          nohup php -S 127.0.0.1:8000 -t public > symfony.log 2>&1 &
 
       - name: Wait for Server to Start
         run: sleep 20 # 🔥 Augmentation du temps d'attente
