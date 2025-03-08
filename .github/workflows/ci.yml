@@ -39,38 +39,39 @@ jobs:
       - name: Run migrations
         run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
 
-      - name: Ensure Required Roles Exist
+      - name: Ensure Required Roles and Villes Exist
         run: |
-          echo "🔧 Vérification et ajout des rôles..."
+          echo "🔧 Vérification et ajout des rôles et villes..."
           sqlite3 var/test.db "INSERT INTO role (id_role, nom_role) VALUES (1, 'admin') ON CONFLICT(id_role) DO NOTHING;"
           sqlite3 var/test.db "INSERT INTO role (id_role, nom_role) VALUES (2, 'utilisateur') ON CONFLICT(id_role) DO NOTHING;"
-          echo "✅ Rôles vérifiés et ajoutés"
-
-      - name: Ensure Required Villes Exist
-        run: |
-          echo "🔧 Vérification et ajout des villes..."
           sqlite3 var/test.db "INSERT INTO ville (id_ville, code_postale, nom_commune) VALUES (1, '75001', 'Paris') ON CONFLICT(id_ville) DO NOTHING;"
-          echo "✅ Villes vérifiées et ajoutées"
+          echo "✅ Rôles et villes vérifiés et ajoutés"
 
-      - name: Debug Database Content (Check Roles & Villes After Insert)
+      - name: Debug Database Content
         run: |
-          echo "🔍 Vérification finale des rôles et villes"
+          echo "🔍 Vérification des données en base"
           sqlite3 var/test.db "SELECT * FROM role;"
           sqlite3 var/test.db "SELECT * FROM ville;"
-
-      - name: Load test data (fixtures)
-        run: php bin/console doctrine:fixtures:load --no-interaction --env=test || echo "No fixtures available"
-
-      - name: Vérifier la présence des utilisateurs avant les tests
-        run: |
-          echo "🔍 Vérification des utilisateurs en base avant tests"
           sqlite3 var/test.db "SELECT * FROM utilisateur;"
 
-      - name: Vérifier connexion et récupération du token JWT
+      - name: Start Symfony Server (GitHub Actions)
+        run: php -S 127.0.0.1:8000 -t public &
+
+      - name: Wait for Server to Start
+        run: sleep 5 # Permet de s'assurer que le serveur a démarré
+
+      - name: Récupérer le Token JWT de jean.dupont@example.com
         run: |
-          echo "🔑 Vérification de l'authentification JWT"
-          RESPONSE=$(curl -s -X POST http://localhost/api/login_check -H "Content-Type: application/json" -d '{"email": "admin.test@example.com", "password": "password"}')
+          echo "🔑 Récupération du Token JWT pour jean.dupont@example.com"
+          RESPONSE=$(curl -s -X POST http://127.0.0.1:8000/api/login_check -H "Content-Type: application/json" -d '{"email": "jean.dupont@example.com", "password": "password123"}')
           echo "Réponse JWT : $RESPONSE"
+          TOKEN=$(echo $RESPONSE | jq -r '.token')
+          if [ "$TOKEN" == "null" ] || [ -z "$TOKEN" ]; then
+            echo "❌ Erreur : Impossible de récupérer le Token JWT pour jean.dupont@example.com."
+            exit 1
+          fi
+          echo "TOKEN_JWT=$TOKEN" >> $GITHUB_ENV
+          echo "✅ Token récupéré avec succès"
 
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --coverage-text
