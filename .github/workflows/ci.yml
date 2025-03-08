@@ -20,7 +20,11 @@ jobs:
         run: echo "DATABASE_URL=sqlite:///%kernel.project_dir%/var/test.db" >> $GITHUB_ENV
 
       - name: Create SQLite database directory
-        run: mkdir -p var && touch var/test.db && chmod 777 var/test.db
+        run: |
+          echo "🔄 Suppression et recréation du fichier SQLite..."
+          rm -f var/test.db
+          touch var/test.db
+          chmod 777 var/test.db
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
@@ -59,6 +63,26 @@ jobs:
 
       - name: Wait for Server to Start
         run: sleep 5 # Permet de s'assurer que le serveur a démarré
+
+      - name: Ensure Admin User Exists
+        run: |
+          echo "🔍 Vérification et création de l'admin jean.dupont@example.com"
+          RESPONSE=$(curl -s -X GET http://127.0.0.1:8000/api/utilisateurs)
+          echo "Réponse utilisateurs : $RESPONSE"
+
+          if [[ $RESPONSE != *"jean.dupont@example.com"* ]]; then
+            echo "🔹 L'admin n'existe pas, création..."
+            curl -s -X POST http://127.0.0.1:8000/api/utilisateur -H "Content-Type: application/json" -d '{
+              "nom": "Dupont",
+              "prenom": "Jean",
+              "email": "jean.dupont@example.com",
+              "motDePasse": "password123",
+              "idRole": 1,
+              "idVille": 1
+            }'
+            sleep 5
+          fi
+          echo "✅ Admin vérifié/créé avec succès."
 
       - name: Récupérer le Token JWT de jean.dupont@example.com
         run: |
