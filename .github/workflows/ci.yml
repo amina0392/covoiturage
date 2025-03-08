@@ -16,6 +16,12 @@ jobs:
           php-version: '8.4'
           extensions: sqlite3, pdo_sqlite, zip, mbstring
 
+      - name: Install Symfony CLI
+        run: curl -sS https://get.symfony.com/cli/installer | bash
+
+      - name: Configure Symfony CLI
+        run: export PATH="$HOME/.symfony/bin:$PATH"
+
       - name: Ensure var directory exists
         run: |
           echo "🔄 Création et permissions du dossier var/"
