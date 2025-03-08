@@ -19,7 +19,7 @@ jobs:
       - name: Configure DATABASE_URL for SQLite
         run: echo "DATABASE_URL=sqlite:///%kernel.project_dir%/var/test.db" >> $GITHUB_ENV
 
-      - name: Create SQLite database directory
+      - name: Create SQLite database directory and file
         run: |
           echo "🔄 Suppression et recréation du fichier SQLite..."
           mkdir -p var
@@ -45,6 +45,9 @@ jobs:
       - name: Run migrations
         run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
 
+      - name: Force schema update
+        run: php bin/console doctrine:schema:update --force --env=test
+
       - name: Ensure Required Roles and Villes Exist
         run: |
           echo "🔧 Vérification et ajout des rôles et villes..."
@@ -56,6 +59,8 @@ jobs:
       - name: Debug Database Content
         run: |
           echo "🔍 Vérification des données en base"
+          ls -lah var/
+          ls -lah var/test.db || echo "⚠️ Fichier var/test.db non trouvé"
           sqlite3 var/test.db "SELECT * FROM role;"
           sqlite3 var/test.db "SELECT * FROM ville;"
           sqlite3 var/test.db "SELECT * FROM utilisateur;"
@@ -64,7 +69,7 @@ jobs:
         run: php -S 127.0.0.1:8000 -t public &
 
       - name: Wait for Server to Start
-        run: sleep 5 # Permet de s'assurer que le serveur a démarré
+        run: sleep 10 # Permet de s'assurer que le serveur a bien démarré
 
       - name: Ensure Admin User Exists
         run: |
@@ -81,28 +86,21 @@ jobs:
               "idRole": 1,
               "idVille": 1
             }'
-            sleep 5
+            sleep 10
           fi
           echo "✅ Admin vérifié/créé avec succès."
-
-      - name: Debug Database Permissions
-        run: |
-          echo "🔍 Vérification des permissions et de l'existence du fichier SQLite"
-          ls -lah var/
-          ls -lah var/test.db || echo "⚠️ Fichier var/test.db non trouvé"
-          chmod 777 var/test.db
-          chmod -R 777 var
-
-      - name: Check if Symfony Server is Running
-        run: |
-          echo "🔍 Vérification du serveur Symfony..."
-          curl -Is http://127.0.0.1:8000 || echo "❌ Erreur : Le serveur Symfony ne répond pas."
 
       - name: Récupérer le Token JWT de jean.dupont@example.com
         run: |
           echo "🔑 Récupération du Token JWT pour jean.dupont@example.com"
           RESPONSE=$(curl -s -X POST http://127.0.0.1:8000/api/login_check -H "Content-Type: application/json" -d '{"email": "jean.dupont@example.com", "password": "password123"}')
           echo "Réponse JWT : $RESPONSE"
+
+          if [[ "$RESPONSE" == *"500 Internal Server Error"* ]]; then
+            echo "❌ Erreur : Le serveur Symfony n'est pas prêt ou la base est vide."
+            exit 1
+          fi
+
           TOKEN=$(echo $RESPONSE | jq -r '.token')
           if [ "$TOKEN" == "null" ] || [ -z "$TOKEN" ]; then
             echo "❌ Erreur : Impossible de récupérer le Token JWT pour jean.dupont@example.com."
