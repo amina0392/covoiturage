@@ -17,10 +17,14 @@ jobs:
           extensions: sqlite3, pdo_sqlite, zip, mbstring
 
       - name: Install Symfony CLI
-        run: curl -sS https://get.symfony.com/cli/installer | bash
+        run: |
+          curl -sS https://get.symfony.com/cli/installer | bash
+          export PATH="$HOME/.symfony/bin:$PATH"
+          echo "export PATH=\"$HOME/.symfony/bin:$PATH\"" >> ~/.bashrc
+          echo "export PATH=\"$HOME/.symfony/bin:$PATH\"" >> ~/.profile
 
-      - name: Configure Symfony CLI
-        run: export PATH="$HOME/.symfony/bin:$PATH"
+      - name: Verify Symfony CLI installation
+        run: symfony -v
 
       - name: Ensure var directory exists
         run: |
