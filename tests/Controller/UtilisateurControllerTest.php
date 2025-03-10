@@ -15,7 +15,7 @@ final class UtilisateurControllerTest extends WebTestCase
     private ?string $userEmail = null;
 
     /**
-     * 🔄 Réinitialise la base avant chaque test
+     * Réinitialise la base avant chaque test
      */
     private function resetDatabase(): void
     {
@@ -29,7 +29,7 @@ final class UtilisateurControllerTest extends WebTestCase
         shell_exec('php bin/console doctrine:migrations:migrate --no-interaction --env=test');
         shell_exec('php bin/console doctrine:fixtures:load --no-interaction --env=test');
 
-        fwrite(STDERR, "✅ Base de données réinitialisée avec succès.\n");
+        fwrite(STDERR, "Base de données réinitialisée avec succès.\n");
     }
 
     /**
@@ -40,7 +40,7 @@ final class UtilisateurControllerTest extends WebTestCase
         $this->adminToken = $this->getToken('jean.dupont@example.com');
 
         if (!$this->adminToken) {
-            fwrite(STDERR, "❌ L'admin jean.dupont@example.com n'existe pas, création en cours...\n");
+            fwrite(STDERR, "L'admin jean.dupont@example.com n'existe pas, création en cours...\n");
 
             $this->client->request(
                 'POST',
@@ -62,7 +62,7 @@ final class UtilisateurControllerTest extends WebTestCase
             $this->adminToken = $this->getToken('jean.dupont@example.com');
 
             if (!$this->adminToken) {
-                throw new \Exception("❌ Impossible d'obtenir un Token JWT pour l'admin jean.dupont@example.com.");
+                throw new \Exception("Impossible d'obtenir un Token JWT pour l'admin jean.dupont@example.com.");
             }
         }
     }
@@ -72,10 +72,10 @@ final class UtilisateurControllerTest extends WebTestCase
         parent::setUp();
         $this->client = static::createClient();
 
-        // 🔥 Réinitialisation de la base avant chaque test
+        // Réinitialisation de la base avant chaque test
         $this->resetDatabase();
 
-        // 🔐 Vérification et récupération de l'admin
+        // Vérification et récupération de l'admin
         $this->ensureAdminExists();
 
         $this->userEmail = 'test.user' . time() . '@example.com';
@@ -99,15 +99,15 @@ final class UtilisateurControllerTest extends WebTestCase
 
         // 🔹 Vérification de la réponse
         $responseContent = json_decode($this->client->getResponse()->getContent(), true);
-        fwrite(STDERR, "📌 Réponse création utilisateur : " . print_r($responseContent, true));
+        fwrite(STDERR, "Réponse création utilisateur : " . print_r($responseContent, true));
 
         $this->userId = $responseContent['id'] ?? null;
-        $this->assertNotNull($this->userId, '❌ ID utilisateur non récupéré après inscription');
+        $this->assertNotNull($this->userId, 'ID utilisateur non récupéré après inscription');
 
         // 🔹 Récupération du Token JWT utilisateur
         sleep(2);
         $this->token = $this->getToken($this->userEmail);
-        $this->assertNotNull($this->token, '❌ Échec de la récupération du token JWT utilisateur');
+        $this->assertNotNull($this->token, 'Échec de la récupération du token JWT utilisateur');
     }
 
     private function getToken(string $email): ?string
@@ -127,7 +127,7 @@ final class UtilisateurControllerTest extends WebTestCase
         $response = json_decode($this->client->getResponse()->getContent(), true);
 
         if (!isset($response['token'])) {
-            fwrite(STDERR, "❌ Échec de la récupération du Token JWT pour $email. Réponse API: " . print_r($response, true));
+            fwrite(STDERR, "Échec de la récupération du Token JWT pour $email. Réponse API: " . print_r($response, true));
             return null;
         }
 
@@ -149,15 +149,15 @@ final class UtilisateurControllerTest extends WebTestCase
         );
 
         $response = json_decode($this->client->getResponse()->getContent(), true);
-        fwrite(STDERR, "📌 Réponse connexion utilisateur : " . print_r($response, true));
+        fwrite(STDERR, "Réponse connexion utilisateur : " . print_r($response, true));
 
-        $this->assertArrayHasKey('token', $response, '❌ Le token JWT n’a pas été retourné.');
-        $this->assertNotEmpty($response['token'], '❌ Le token JWT est vide.');
+        $this->assertArrayHasKey('token', $response, 'Le token JWT n’a pas été retourné.');
+        $this->assertNotEmpty($response['token'], 'Le token JWT est vide.');
     }
 
     public function testModificationUtilisateur(): void
     {
-        $this->assertNotNull($this->userId, '❌ ID utilisateur non récupéré');
+        $this->assertNotNull($this->userId, 'ID utilisateur non récupéré');
 
         $this->client->request(
             'PUT',
@@ -177,7 +177,7 @@ final class UtilisateurControllerTest extends WebTestCase
 
     public function testSuppressionUtilisateur(): void
     {
-        $this->assertNotNull($this->userId, '❌ ID utilisateur non récupéré');
+        $this->assertNotNull($this->userId, 'ID utilisateur non récupéré');
 
         $this->client->request(
             "DELETE",
@@ -205,7 +205,7 @@ final class UtilisateurControllerTest extends WebTestCase
         fwrite(STDERR, print_r($response, true));
 
         $this->assertIsArray($response);
-        $this->assertGreaterThanOrEqual(1, count($response), '❌ La liste des utilisateurs ne doit pas être vide.');
+        $this->assertGreaterThanOrEqual(1, count($response), 'La liste des utilisateurs ne doit pas être vide.');
     }
 
     protected function tearDown(): void

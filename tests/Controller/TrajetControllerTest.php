@@ -22,8 +22,22 @@ final class TrajetControllerTest extends WebTestCase
         $this->userEmail = 'test.user' . time() . '@example.com';
 
         // 🔹 Vérification et Création de l'Admin si nécessaire
+        $this->ensureAdminExists();
+
+        // 🔹 Création d’un Utilisateur avec Voiture
+        $this->createUserWithCar();
+    }
+
+    /**
+     * 🔍 Vérification de l'existence de l'admin et récupération de son token
+     */
+    private function ensureAdminExists(): void
+    {
         $this->adminToken = $this->getToken('jean.dupont@example.com', 'password123');
+
         if (!$this->adminToken) {
+            fwrite(STDERR, "⚠️ L'admin jean.dupont@example.com n'existe pas, création en cours...\n");
+
             $this->client->request(
                 'POST',
                 '/api/utilisateur',
@@ -39,15 +53,21 @@ final class TrajetControllerTest extends WebTestCase
                     'idVille' => 1
                 ])
             );
-            sleep(2);
+
+            sleep(2); // 🔥 Pause pour assurer l'enregistrement en base
             $this->adminToken = $this->getToken('jean.dupont@example.com', 'password123');
         }
 
         if (!$this->adminToken) {
             throw new \Exception("❌ Impossible d'obtenir un Token JWT pour jean.dupont@example.com.");
         }
+    }
 
-        // 🔹 Création d’un Utilisateur avec Voiture
+    /**
+     * 🔹 Création d'un utilisateur avec une voiture
+     */
+    private function createUserWithCar(): void
+    {
         $this->client->request(
             'POST',
             '/api/utilisateur',
@@ -110,7 +130,12 @@ final class TrajetControllerTest extends WebTestCase
 
         $response = json_decode($this->client->getResponse()->getContent(), true);
 
-        return $response['token'] ?? null;
+        if (!isset($response['token'])) {
+            fwrite(STDERR, "❌ Échec de la récupération du Token JWT pour $email. Réponse API: " . print_r($response, true));
+            return null;
+        }
+
+        return $response['token'];
     }
 
     public function testCreationTrajet(): void

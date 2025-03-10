@@ -105,6 +105,8 @@ final class VoitureControllerTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(201);
         $this->assertArrayHasKey('message', $responseContent);
+        
+        // 🔹 Vérification de l'ID voiture
         $this->voitureId = $responseContent['id'] ?? null;
         $this->assertNotNull($this->voitureId, '❌ ID voiture non récupéré après création');
     }
@@ -159,7 +161,7 @@ final class VoitureControllerTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(403);
         $responseContent = json_decode($this->client->getResponse()->getContent(), true);
-        $this->assertEquals('Accès refusé', $responseContent['error']);
+        $this->assertEquals('Accès refusé', mb_convert_encoding($responseContent['error'], 'UTF-8', 'ISO-8859-1'), '❌ Erreur d\'encodage sur le message d\'erreur');
     }
 
     protected function tearDown(): void

@@ -16,19 +16,6 @@ jobs:
           php-version: '8.4'
           extensions: sqlite3, pdo_sqlite, zip, mbstring
 
-      - name: Install Symfony CLI
-        run: |
-          curl -sS https://get.symfony.com/cli/installer | bash
-          export PATH="$HOME/.symfony/bin:$HOME/.local/bin:$PATH"
-          echo "export PATH=\"$HOME/.symfony/bin:$HOME/.local/bin:$PATH\"" >> ~/.bashrc
-          echo "export PATH=\"$HOME/.symfony/bin:$HOME/.local/bin:$PATH\"" >> ~/.profile
-          ln -s $HOME/.symfony/bin/symfony /usr/local/bin/symfony
-
-      - name: Verify Symfony CLI installation
-        run: |
-          which symfony || echo "❌ Symfony CLI non trouvé"
-          symfony -v
-
       - name: Ensure var directory exists
         run: |
           echo "🔄 Création et permissions du dossier var/"
@@ -36,7 +23,7 @@ jobs:
           chmod -R 777 var
 
       - name: Configure DATABASE_URL for SQLite
-        run: echo "DATABASE_URL=sqlite:///%kernel.project_dir%/var/test.db" >> $GITHUB_ENV
+        run: echo "DATABASE_URL=sqlite:///%kernel.project_dir%/var/test.db?charset=UTF8" >> $GITHUB_ENV
 
       - name: Create SQLite database file
         run: |
@@ -84,11 +71,17 @@ jobs:
 
       - name: Start Symfony Server
         run: |
-          echo "🚀 Démarrage du serveur Symfony..."
+          echo "🚀 Démarrage du serveur PHP intégré..."
           nohup php -S 127.0.0.1:8000 -t public > symfony.log 2>&1 &
 
       - name: Wait for Server to Start
-        run: sleep 20 # 🔥 Augmentation du temps d'attente
+        run: |
+          echo "🕒 Attente de la disponibilité du serveur..."
+          for i in {1..30}; do
+            curl -s http://127.0.0.1:8000/api/healthcheck && break
+            echo "⏳ Serveur non prêt, attente..."
+            sleep 2
+          done
 
       - name: Ensure Admin User Exists
         run: |
