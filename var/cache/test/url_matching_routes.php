@@ -23,7 +23,6 @@ return [
         '/api/villes' => [[['_route' => 'liste_villes', '_controller' => 'App\\Controller\\ApiVilleController::listeVilles'], null, ['GET' => 0], null, false, false, null]],
         '/api/ville/recherche' => [[['_route' => 'recherche_ville', '_controller' => 'App\\Controller\\ApiVilleController::rechercheVille'], null, ['GET' => 0], null, false, false, null]],
         '/api/voiture' => [[['_route' => 'creation_voiture', '_controller' => 'App\\Controller\\ApiVoitureController::creationVoiture'], null, ['POST' => 0], null, false, false, null]],
-        '/api/voitures' => [[['_route' => 'liste_voitures', '_controller' => 'App\\Controller\\ApiVoitureController::listeVoitures'], null, ['GET' => 0], null, false, false, null]],
         '/api/healthcheck' => [[['_route' => 'health_check', '_controller' => 'App\\Controller\\HealthCheckController::healthCheck'], null, ['GET' => 0], null, false, false, null]],
         '/api/login_check' => [
             [['_route' => 'api_login', '_controller' => 'App\\Controller\\SecurityController::login'], null, ['POST' => 0], null, false, false, null],

@@ -23,7 +23,7 @@ jobs:
           chmod -R 777 var
 
       - name: Configure DATABASE_URL for SQLite
-        run: echo "DATABASE_URL=sqlite:///%kernel.project_dir%/var/test.db?charset=UTF8" >> $GITHUB_ENV
+        run: echo "DATABASE_URL=sqlite:///%kernel.project_dir%/var/test.db" >> $GITHUB_ENV
 
       - name: Create SQLite database file
         run: |

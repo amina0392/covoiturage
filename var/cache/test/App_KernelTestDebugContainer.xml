@@ -463,7 +463,7 @@
     </service>
     <service id="argument_resolver.service" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\ServiceValueResolver">
       <tag priority="-50" name="Symfony\Component\HttpKernel\Controller\ArgumentResolver\ServiceValueResolver">controller.argument_value_resolver</tag>
-      <argument type="service" id=".service_locator.ZLYl0Op"/>
+      <argument type="service" id=".service_locator.XFHGT6a"/>
     </service>
     <service id="argument_resolver.default" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\DefaultValueResolver">
       <tag priority="-100" name="Symfony\Component\HttpKernel\Controller\ArgumentResolver\DefaultValueResolver">controller.argument_value_resolver</tag>
@@ -2608,7 +2608,7 @@
         <argument key="Lexik\Bundle\JWTAuthenticationBundle\TokenExtractor\TokenExtractorInterface" type="service_closure" id="lexik_jwt_authentication.extractor.chain_extractor" on-invalid="ignore_uninitialized"/>
         <argument key="Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface" type="service_closure" id="lexik_jwt_authentication.encoder.lcobucci" on-invalid="ignore_uninitialized"/>
         <argument key="twig.loader.filesystem" type="service_closure" id="twig.loader.native_filesystem" on-invalid="ignore_uninitialized"/>
-        <argument key="argument_resolver.controller_locator" type="service_closure" id=".service_locator.ZLYl0Op" on-invalid="ignore_uninitialized"/>
+        <argument key="argument_resolver.controller_locator" type="service_closure" id=".service_locator.XFHGT6a" on-invalid="ignore_uninitialized"/>
         <argument key="doctrine.id_generator_locator" type="service_closure" id=".service_locator.BxSdgVt" on-invalid="ignore_uninitialized"/>
         <argument key="twig.loader" type="service_closure" id="twig.loader.native_filesystem" on-invalid="ignore_uninitialized"/>
         <argument key="Psr\Log\LoggerInterface $requestLogger" type="service_closure" id="monolog.logger.request" on-invalid="ignore_uninitialized"/>
@@ -4301,7 +4301,7 @@
     </service>
     <service id="argument_resolver.not_tagged_controller" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\NotTaggedControllerValueResolver">
       <tag name="controller.argument_value_resolver" priority="-200"/>
-      <argument type="service" id=".service_locator.ZLYl0Op"/>
+      <argument type="service" id=".service_locator.XFHGT6a"/>
     </service>
     <service id="debug.log_processor" class="Symfony\Bridge\Monolog\Processor\DebugProcessor">
       <tag name="kernel.reset" method="reset"/>
@@ -8718,12 +8718,6 @@
       <argument type="service" id="service_container"/>
       <factory service=".service_locator.GDVkKA8" method="withContext"/>
     </service>
-    <service id=".service_locator.egipcEH.App\Controller\ApiVoitureController::listeVoitures()" class="Symfony\Component\DependencyInjection\ServiceLocator">
-      <tag name="container.service_locator_context" id="App\Controller\ApiVoitureController::listeVoitures()"/>
-      <argument>App\Controller\ApiVoitureController::listeVoitures()</argument>
-      <argument type="service" id="service_container"/>
-      <factory service=".service_locator.egipcEH" method="withContext"/>
-    </service>
     <service id=".service_locator.AH5oBqj" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
@@ -8736,7 +8730,7 @@
       <argument type="service" id="service_container"/>
       <factory service=".service_locator.AH5oBqj" method="withContext"/>
     </service>
-    <service id=".service_locator.ZLYl0Op" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.XFHGT6a" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
         <argument key="kernel::registerContainerConfiguration" type="service_closure" id=".service_locator.zHyJIs5.kernel::registerContainerConfiguration()"/>
@@ -8766,7 +8760,6 @@
         <argument key="App\Controller\ApiVilleController::supprimerVille" type="service_closure" id=".service_locator.pmfJ8zN.App\Controller\ApiVilleController::supprimerVille()"/>
         <argument key="App\Controller\ApiVoitureController::creationVoiture" type="service_closure" id=".service_locator.V4sjxsM.App\Controller\ApiVoitureController::creationVoiture()"/>
         <argument key="App\Controller\ApiVoitureController::suppressionVoiture" type="service_closure" id=".service_locator.GDVkKA8.App\Controller\ApiVoitureController::suppressionVoiture()"/>
-        <argument key="App\Controller\ApiVoitureController::listeVoitures" type="service_closure" id=".service_locator.egipcEH.App\Controller\ApiVoitureController::listeVoitures()"/>
         <argument key="App\Controller\SecurityController::login" type="service_closure" id=".service_locator.AH5oBqj.App\Controller\SecurityController::login()"/>
         <argument key="kernel:registerContainerConfiguration" type="service_closure" id=".service_locator.zHyJIs5.kernel::registerContainerConfiguration()"/>
         <argument key="kernel:loadRoutes" type="service_closure" id=".service_locator.zHyJIs5.kernel::loadRoutes()"/>
@@ -8793,7 +8786,6 @@
         <argument key="App\Controller\ApiVilleController:supprimerVille" type="service_closure" id=".service_locator.pmfJ8zN.App\Controller\ApiVilleController::supprimerVille()"/>
         <argument key="App\Controller\ApiVoitureController:creationVoiture" type="service_closure" id=".service_locator.V4sjxsM.App\Controller\ApiVoitureController::creationVoiture()"/>
         <argument key="App\Controller\ApiVoitureController:suppressionVoiture" type="service_closure" id=".service_locator.GDVkKA8.App\Controller\ApiVoitureController::suppressionVoiture()"/>
-        <argument key="App\Controller\ApiVoitureController:listeVoitures" type="service_closure" id=".service_locator.egipcEH.App\Controller\ApiVoitureController::listeVoitures()"/>
         <argument key="App\Controller\SecurityController:login" type="service_closure" id=".service_locator.AH5oBqj.App\Controller\SecurityController::login()"/>
       </argument>
     </service>
@@ -10496,7 +10488,7 @@
     <service id="lexik_jwt_authentication.key_loader" alias="lexik_jwt_authentication.key_loader.raw" public="true"/>
     <service id="container.env_var_processors_locator" alias=".service_locator.pRu6x_4" public="true"/>
     <service id="twig.loader.filesystem" alias="twig.loader.native_filesystem"/>
-    <service id="argument_resolver.controller_locator" alias=".service_locator.ZLYl0Op"/>
+    <service id="argument_resolver.controller_locator" alias=".service_locator.XFHGT6a"/>
     <service id="doctrine.id_generator_locator" alias=".service_locator.BxSdgVt"/>
     <service id="twig.loader" alias="twig.loader.native_filesystem"/>
     <service id="Psr\Log\LoggerInterface $requestLogger" alias="monolog.logger.request"/>

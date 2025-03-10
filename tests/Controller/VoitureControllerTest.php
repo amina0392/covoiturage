@@ -83,7 +83,7 @@ final class VoitureControllerTest extends WebTestCase
     public function testCreationVoiture(): void
     {
         $this->assertNotNull($this->userId, '❌ ID utilisateur non récupéré');
-
+    
         // 🔹 Création d'une voiture
         $this->client->request(
             'POST',
@@ -99,21 +99,33 @@ final class VoitureControllerTest extends WebTestCase
                 'id_utilisateur' => $this->userId
             ])
         );
-
+    
+        sleep(2); // 🔥 Pause pour éviter les erreurs d'accès concurrents
         $responseContent = json_decode($this->client->getResponse()->getContent(), true);
         fwrite(STDERR, "📌 Réponse création voiture : " . print_r($responseContent, true));
-
+    
         $this->assertResponseStatusCodeSame(201);
-        $this->assertArrayHasKey('message', $responseContent);
-        
-        // 🔹 Vérification de l'ID voiture
-        $this->voitureId = $responseContent['id'] ?? null;
+        $this->assertArrayHasKey('id', $responseContent, '❌ ID voiture manquant dans la réponse.');
+    
+        // ✅ Sauvegarde l'ID voiture récupéré
+        $this->voitureId = $responseContent['id'];
         $this->assertNotNull($this->voitureId, '❌ ID voiture non récupéré après création');
     }
 
     public function testSuppressionVoiture(): void
     {
         $this->assertNotNull($this->voitureId, '❌ ID voiture non récupéré');
+
+        // 🔍 Vérifier que la voiture existe bien avant suppression
+        $this->client->request(
+            'GET',
+            "/api/voitures",
+            [],
+            [],
+            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->adminToken]
+        );
+        $responseBeforeDeletion = json_decode($this->client->getResponse()->getContent(), true);
+        fwrite(STDERR, "📌 Liste des voitures avant suppression : " . print_r($responseBeforeDeletion, true));
 
         // 🔹 Suppression de la voiture
         $this->client->request(
@@ -126,57 +138,24 @@ final class VoitureControllerTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(200);
         $responseContent = json_decode($this->client->getResponse()->getContent(), true);
-        $this->assertEquals('Voiture supprimée avec succès', $responseContent['message']);
-    }
+        fwrite(STDERR, "📌 Réponse suppression voiture : " . print_r($responseContent, true));
 
-    public function testListeVoitures(): void
-    {
-        // 🔹 Lister les voitures avec un admin
+        $this->assertEquals('Voiture supprimée avec succès', $responseContent['message']);
+
+        // 🔍 Vérifier que la voiture n'existe plus
         $this->client->request(
             'GET',
-            '/api/voitures',
+            "/api/voitures",
             [],
             [],
             ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->adminToken]
         );
+        $responseAfterDeletion = json_decode($this->client->getResponse()->getContent(), true);
+        fwrite(STDERR, "📌 Liste des voitures après suppression : " . print_r($responseAfterDeletion, true));
 
-        $this->assertResponseIsSuccessful();
-        $response = json_decode($this->client->getResponse()->getContent(), true);
-        fwrite(STDERR, "📌 Réponse liste voitures : " . print_r($response, true));
-
-        $this->assertIsArray($response);
-        $this->assertGreaterThanOrEqual(0, count($response), '❌ La liste des voitures ne doit pas être vide.');
-    }
-
-    public function testAccesRefuseListeVoitures(): void
-    {
-        // 🔹 Lister les voitures avec un utilisateur classique
-        $this->client->request(
-            'GET',
-            '/api/voitures',
-            [],
-            [],
-            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->userToken]
-        );
-
-        $this->assertResponseStatusCodeSame(403);
-        $responseContent = json_decode($this->client->getResponse()->getContent(), true);
-        $this->assertEquals('Accès refusé', mb_convert_encoding($responseContent['error'], 'UTF-8', 'ISO-8859-1'), '❌ Erreur d\'encodage sur le message d\'erreur');
-    }
-
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-
-        // 🔹 Suppression de l'utilisateur
-        if ($this->userId) {
-            $this->client->request(
-                "DELETE",
-                "/api/utilisateur/{$this->userId}",
-                [],
-                [],
-                ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->adminToken]
-            );
+        // ✅ Vérifier que la voiture a bien été supprimée
+        foreach ($responseAfterDeletion as $voiture) {
+            $this->assertNotEquals($this->voitureId, $voiture['id'], '❌ La voiture n\'a pas été supprimée !');
         }
     }
 }

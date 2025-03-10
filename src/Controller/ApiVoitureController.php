@@ -19,7 +19,11 @@ class ApiVoitureController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
-        $utilisateur = $utilisateurRepo->find($data['id_utilisateur'] ?? null);
+        if (!isset($data['id_utilisateur'])) {
+            return new JsonResponse(['error' => 'ID utilisateur manquant'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        $utilisateur = $utilisateurRepo->find($data['id_utilisateur']);
         if (!$utilisateur) {
             return new JsonResponse(['error' => 'Utilisateur non trouvé'], JsonResponse::HTTP_NOT_FOUND);
         }
@@ -41,7 +45,7 @@ class ApiVoitureController extends AbstractController
 
         return new JsonResponse([
             'message' => 'Voiture ajoutée avec succès et rattachée à l\'utilisateur',
-            'id' => $voiture->getIdVoiture() // ✅ Correction : Ajout de l'ID de la voiture à la réponse API
+            'id' => $voiture->getIdVoiture() // ✅ Retour de l'ID
         ], JsonResponse::HTTP_CREATED);
     }
 
@@ -55,7 +59,6 @@ class ApiVoitureController extends AbstractController
         }
 
         $utilisateurConnecte = $security->getUser();
-
         if ($voiture->getUtilisateur() !== $utilisateurConnecte) {
             return new JsonResponse(['error' => 'Vous n\'êtes pas autorisé à supprimer cette voiture'], JsonResponse::HTTP_FORBIDDEN);
         }
@@ -63,32 +66,9 @@ class ApiVoitureController extends AbstractController
         $entityManager->remove($voiture);
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Voiture supprimée avec succès'], JsonResponse::HTTP_OK);
-    }
-
-    #[Route('/api/voitures', name: 'liste_voitures', methods: ['GET'])]
-    public function listeVoitures(EntityManagerInterface $entityManager): JsonResponse
-    {
-        $currentUser = $this->getUser();
-
-        if (!$currentUser || !in_array('ROLE_ADMIN', $currentUser->getRoles())) {
-            return new JsonResponse(['error' => 'Accès refusé'], JsonResponse::HTTP_FORBIDDEN);
-        }
-
-        $voitures = $entityManager->getRepository(Voiture::class)->findAll();
-
-        $data = [];
-        foreach ($voitures as $voiture) {
-            $data[] = [
-                'id' => $voiture->getIdVoiture(),
-                'marque' => $voiture->getMarque(),
-                'modele' => $voiture->getModele(),
-                'immatriculation' => $voiture->getImmatriculation(),
-                'nb_places' => $voiture->getNbPlaces(),
-                'proprietaire' => $voiture->getUtilisateur()->getNom() . ' ' . $voiture->getUtilisateur()->getPrenom(),
-            ];
-        }
-
-        return new JsonResponse($data, JsonResponse::HTTP_OK);
+        return new JsonResponse([
+            'message' => 'Voiture supprimée avec succès',
+            'id' => $id // ✅ Retour de l'ID
+        ], JsonResponse::HTTP_OK);
     }
 }

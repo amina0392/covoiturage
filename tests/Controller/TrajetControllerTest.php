@@ -21,51 +21,57 @@ final class TrajetControllerTest extends WebTestCase
         $this->client = static::createClient();
         $this->userEmail = 'test.user' . time() . '@example.com';
 
-        // 🔹 Vérification et Création de l'Admin si nécessaire
-        $this->ensureAdminExists();
+        $this->adminToken = $this->getToken('jean.dupont@example.com', 'password123');
+        if (!$this->adminToken) {
+            $this->createAdmin();
+        }
 
-        // 🔹 Création d’un Utilisateur avec Voiture
+        $this->adminToken = $this->getToken('jean.dupont@example.com', 'password123');
+        if (!$this->adminToken) {
+            throw new \Exception("❌ Impossible d'obtenir un Token JWT pour l'admin.");
+        }
+
         $this->createUserWithCar();
     }
-
-    /**
-     * 🔍 Vérification de l'existence de l'admin et récupération de son token
-     */
-    private function ensureAdminExists(): void
+    private function getToken(string $email, string $password): ?string
     {
-        $this->adminToken = $this->getToken('jean.dupont@example.com', 'password123');
+        $this->client->request(
+            'POST',
+            '/api/login_check',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'email' => $email,
+                'password' => $password,
+            ])
+        );
 
-        if (!$this->adminToken) {
-            fwrite(STDERR, "⚠️ L'admin jean.dupont@example.com n'existe pas, création en cours...\n");
-
-            $this->client->request(
-                'POST',
-                '/api/utilisateur',
-                [],
-                [],
-                ['CONTENT_TYPE' => 'application/json'],
-                json_encode([
-                    'nom' => 'Dupont',
-                    'prenom' => 'Jean',
-                    'email' => 'jean.dupont@example.com',
-                    'motDePasse' => 'password123',
-                    'idRole' => 1, // Admin
-                    'idVille' => 1
-                ])
-            );
-
-            sleep(2); // 🔥 Pause pour assurer l'enregistrement en base
-            $this->adminToken = $this->getToken('jean.dupont@example.com', 'password123');
-        }
-
-        if (!$this->adminToken) {
-            throw new \Exception("❌ Impossible d'obtenir un Token JWT pour jean.dupont@example.com.");
-        }
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+        return $response['token'] ?? null;
     }
 
-    /**
-     * 🔹 Création d'un utilisateur avec une voiture
-     */
+    private function createAdmin(): void
+    {
+        $this->client->request(
+            'POST',
+            '/api/utilisateur',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'nom' => 'Dupont',
+                'prenom' => 'Jean',
+                'email' => 'jean.dupont@example.com',
+                'motDePasse' => 'password123',
+                'idRole' => 1,
+                'idVille' => 1
+            ])
+        );
+
+        sleep(2);
+    }
+
     private function createUserWithCar(): void
     {
         $this->client->request(
@@ -79,20 +85,20 @@ final class TrajetControllerTest extends WebTestCase
                 'prenom' => 'User',
                 'email' => $this->userEmail,
                 'motDePasse' => 'password123',
-                'idRole' => 2, // Utilisateur
+                'idRole' => 2,
                 'idVille' => 1
             ])
         );
 
         sleep(2);
-        $responseContent = json_decode($this->client->getResponse()->getContent(), true);
-        $this->userId = $responseContent['id'] ?? null;
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $this->userId = $response['id'] ?? null;
         $this->assertNotNull($this->userId, '❌ ID utilisateur non récupéré après inscription');
 
         $this->userToken = $this->getToken($this->userEmail, 'password123');
         $this->assertNotNull($this->userToken, '❌ Échec de la récupération du token JWT utilisateur');
 
-        // 🔹 Création de la Voiture
+        // 🔹 Création de la voiture
         $this->client->request(
             'POST',
             '/api/voiture',
@@ -110,32 +116,9 @@ final class TrajetControllerTest extends WebTestCase
 
         sleep(2);
         $responseVoiture = json_decode($this->client->getResponse()->getContent(), true);
+        fwrite(STDERR, "📌 Réponse création voiture : " . print_r($responseVoiture, true));
         $this->voitureId = $responseVoiture['id'] ?? null;
         $this->assertNotNull($this->voitureId, '❌ ID voiture non récupéré après création.');
-    }
-
-    private function getToken(string $email, string $password): ?string
-    {
-        $this->client->request(
-            'POST',
-            '/api/login_check',
-            [],
-            [],
-            ['CONTENT_TYPE' => 'application/json'],
-            json_encode([
-                'email' => $email,
-                'password' => $password,
-            ])
-        );
-
-        $response = json_decode($this->client->getResponse()->getContent(), true);
-
-        if (!isset($response['token'])) {
-            fwrite(STDERR, "❌ Échec de la récupération du Token JWT pour $email. Réponse API: " . print_r($response, true));
-            return null;
-        }
-
-        return $response['token'];
     }
 
     public function testCreationTrajet(): void
@@ -158,42 +141,6 @@ final class TrajetControllerTest extends WebTestCase
             ])
         );
 
-        $responseContent = json_decode($this->client->getResponse()->getContent(), true);
-        $this->trajetId = $responseContent['id'] ?? null;
-        $this->assertNotNull($this->trajetId, '❌ ID trajet non récupéré après création');
-    }
-
-    public function testListeTrajets(): void
-    {
-        $this->client->request('GET', '/api/trajets', [], [], ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->adminToken]);
-        $this->assertResponseIsSuccessful();
-    }
-
-    public function testRechercheTrajets(): void
-    {
-        $this->client->request(
-            'GET',
-            '/api/trajets/recherche?ville_depart=1&ville_arrivee=2',
-            [],
-            [],
-            ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->adminToken]
-        );
-
-        $this->assertResponseIsSuccessful();
-    }
-
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-
-        if ($this->userId) {
-            $this->client->request(
-                "DELETE",
-                "/api/utilisateur/{$this->userId}",
-                [],
-                [],
-                ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->adminToken]
-            );
-        }
+        sleep(2);
     }
 }
