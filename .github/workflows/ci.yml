@@ -32,6 +32,20 @@ jobs:
           touch var/test.db
           chmod 777 var/test.db
           ls -lah var
+            - name: Clear cache and remove vendor
+        run: rm -rf vendor/ composer.lock
+
+      - name: Clear Composer Cache
+        run: composer clear-cache
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --dev
+
+      - name: Optimize Composer Autoload
+        run: composer dump-autoload --optimize --classmap-authoritative
+
+      - name: Debug PHPUnit Installation
+        run: ls -lah vendor/phpunit/phpunit/
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
