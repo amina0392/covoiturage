@@ -34,7 +34,9 @@ jobs:
           ls -lah var
 
       - name: Clear cache and remove vendor
-        run: rm -rf vendor/ composer.lock
+        run: |
+          echo "🔄 Suppression du cache et du vendor"
+          rm -rf vendor/ composer.lock
 
       - name: Clear Composer Cache
         run: composer clear-cache
@@ -42,9 +44,11 @@ jobs:
       - name: Disable Composer public key check
         run: composer config --global secure-http false
 
-
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --dev
+        run: |
+          echo "🔄 Installation des dépendances Composer"
+          sleep 10
+          COMPOSER_DISABLE_NETWORK=1 composer install --no-interaction --prefer-dist --dev || exit 1
 
       - name: Optimize Composer Autoload
         run: composer dump-autoload --optimize --classmap-authoritative
@@ -52,7 +56,7 @@ jobs:
       - name: Debug Composer and PHPUnit Installation
         run: |
           composer diagnose
-          ls -lah vendor/phpunit/phpunit/
+          ls -lah vendor/phpunit/phpunit/ || echo "❌ PHPUnit non installé !"
 
       - name: Configure JWT keys
         run: |
@@ -86,21 +90,6 @@ jobs:
           sqlite3 var/test.db "SELECT * FROM role;"
           sqlite3 var/test.db "SELECT * FROM ville;"
           sqlite3 var/test.db "SELECT * FROM utilisateur;"
-
-      - name: Start Symfony Server
-        run: |
-          echo "🚀 Démarrage du serveur PHP intégré..."
-          php -S 127.0.0.1:8000 -t public > symfony.log 2>&1 &
-
-      - name: Wait for Server to Start
-        run: |
-          echo "🕒 Attente de la disponibilité du serveur..."
-          for i in {1..45}; do
-            curl -s http://127.0.0.1:8000/api/healthcheck && break
-            echo "⏳ Serveur non prêt, attente..."
-            sleep 2
-          done
-          echo "✅ Serveur Symfony prêt."
 
       - name: Ensure Admin User Exists
         run: |
@@ -149,4 +138,6 @@ jobs:
           exit 1
 
       - name: Run PHPUnit tests
-        run: vendor/bin/phpunit --coverage-text
+        run: |
+          echo "🚀 Exécution des tests PHPUnit"
+          vendor/bin/phpunit --coverage-text || exit 1
