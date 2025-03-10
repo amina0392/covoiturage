@@ -39,6 +39,9 @@ jobs:
       - name: Clear Composer Cache
         run: composer clear-cache
 
+      - name: Update Composer public keys
+        run: composer self-update --update-keys
+
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --dev
 
