@@ -13,50 +13,17 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: '8.2'
           extensions: sqlite3, pdo_sqlite, zip, mbstring
-
-      - name: Ensure var directory exists
-        run: |
-          echo "🔄 Création et permissions du dossier var/"
-          mkdir -p var
-          chmod -R 777 var
 
       - name: Configure DATABASE_URL for SQLite
         run: echo "DATABASE_URL=sqlite:///%kernel.project_dir%/var/test.db" >> $GITHUB_ENV
 
-      - name: Create SQLite database file
-        run: |
-          echo "🔄 Suppression et recréation du fichier SQLite..."
-          rm -f var/test.db
-          touch var/test.db
-          chmod 777 var/test.db
-          ls -lah var
-
-      - name: Clear cache and remove vendor
-        run: |
-          echo "🔄 Suppression du cache et du vendor"
-          rm -rf vendor/ composer.lock
-
-      - name: Clear Composer Cache
-        run: composer clear-cache
-
-      - name: Disable Composer public key check
-        run: composer config --global secure-http false
+      - name: Create SQLite database directory
+        run: mkdir -p var && touch var/test.db && chmod 777 var/test.db
 
       - name: Install dependencies
-        run: |
-          echo "🔄 Installation des dépendances Composer"
-          sleep 10
-          COMPOSER_DISABLE_NETWORK=1 composer install --no-interaction --prefer-dist --dev || exit 1
-
-      - name: Optimize Composer Autoload
-        run: composer dump-autoload --optimize --classmap-authoritative
-
-      - name: Debug Composer and PHPUnit Installation
-        run: |
-          composer diagnose
-          ls -lah vendor/phpunit/phpunit/ || echo "❌ PHPUnit non installé !"
+        run: composer install --no-interaction --prefer-dist
 
       - name: Configure JWT keys
         run: |
@@ -65,79 +32,39 @@ jobs:
           echo "${{ secrets.JWT_PUBLIC_KEY }}" > config/jwt/public.pem
           chmod 600 config/jwt/private.pem
           chmod 644 config/jwt/public.pem
+      - name: Remove old migrations
+        run: rm -rf migrations/*
 
-      - name: Debug JWT keys
-        run: ls -lah config/jwt
+      - name: Create new migration
+        run: php bin/console doctrine:migrations:diff --env=test || echo "No new migrations"
 
       - name: Run migrations
-        run: php bin/console doctrine:migrations:migrate --no-interaction --env=test || echo "No migrations needed"
+        run: php bin/console doctrine:migrations:migrate --no-interaction --env=test || echo "No migrations to apply"
 
-      - name: Force schema update
-        run: php bin/console doctrine:schema:update --force --env=test
-
-      - name: Ensure Required Roles and Villes Exist
+      - name: Debug Database Content (Check Roles & Villes)
         run: |
-          echo "🔧 Ajout des rôles et villes..."
-          sqlite3 var/test.db "INSERT INTO role (id_role, nom_role) VALUES (1, 'admin') ON CONFLICT(id_role) DO NOTHING;"
-          sqlite3 var/test.db "INSERT INTO role (id_role, nom_role) VALUES (2, 'utilisateur') ON CONFLICT(id_role) DO NOTHING;"
-          sqlite3 var/test.db "INSERT INTO ville (id_ville, code_postale, nom_commune) VALUES (1, '75001', 'Paris') ON CONFLICT(id_ville) DO NOTHING;"
-          echo "✅ Rôles et villes vérifiés et ajoutés"
-
-      - name: Debug Database Content
-        run: |
-          echo "🔍 Vérification des données en base"
-          ls -lah var/
+          echo "🔍 Vérification des rôles et villes dans la base de données"
           sqlite3 var/test.db "SELECT * FROM role;"
           sqlite3 var/test.db "SELECT * FROM ville;"
-          sqlite3 var/test.db "SELECT * FROM utilisateur;"
-
-      - name: Ensure Admin User Exists
+      - name: Ensure Required Roles Exist
         run: |
-          echo "🔍 Vérification et création de l'admin jean.dupont@example.com"
-          TABLE_EXISTS=$(sqlite3 var/test.db "SELECT name FROM sqlite_master WHERE type='table' AND name='utilisateur';")
-          if [ -z "$TABLE_EXISTS" ]; then
-            echo "❌ Table utilisateur introuvable ! Base vide ?"
-            exit 1
-          fi
-
-          EXISTS=$(sqlite3 var/test.db "SELECT COUNT(*) FROM utilisateur WHERE email='jean.dupont@example.com';")
-          if [ "$EXISTS" -eq "0" ]; then
-            echo "🔹 L'admin n'existe pas, création..."
-            curl -s -X POST http://127.0.0.1:8000/api/utilisateur -H "Content-Type: application/json" -d '{
-              "nom": "Dupont",
-              "prenom": "Jean",
-              "email": "jean.dupont@example.com",
-              "motDePasse": "password123",
-              "idRole": 1,
-              "idVille": 1
-            }'
-            sleep 10
-          fi
-          echo "✅ Admin vérifié/créé avec succès."
-
-      - name: Récupérer le Token JWT de jean.dupont@example.com
+          echo "🔧 Vérification et ajout des rôles..."
+          sqlite3 var/test.db "INSERT INTO role (id_role, nom_role) VALUES (3, 'admin') ON CONFLICT(id_role) DO NOTHING;"
+          sqlite3 var/test.db "INSERT INTO role (id_role, nom_role) VALUES (4, 'utilisateur') ON CONFLICT(id_role) DO NOTHING;"
+          echo "✅ Rôles vérifiés et ajoutés"
+      - name: Ensure Required Villes Exist
         run: |
-          echo "🔑 Récupération du Token JWT pour jean.dupont@example.com"
-          for i in {1..3}; do
-            RESPONSE=$(curl -s -X POST http://127.0.0.1:8000/api/login_check -H "Content-Type: application/json" -d '{"email": "jean.dupont@example.com", "password": "password123"}')
-            echo "Réponse JWT : $RESPONSE"
-
-            if [[ "$RESPONSE" != *"Invalid credentials"* && "$RESPONSE" != *"500 Internal Server Error"* ]]; then
-              TOKEN=$(echo $RESPONSE | jq -r '.token')
-              if [ "$TOKEN" != "null" ] && [ -n "$TOKEN" ]; then
-                echo "TOKEN_JWT=$TOKEN" >> $GITHUB_ENV
-                echo "✅ Token récupéré avec succès"
-                exit 0
-              fi
-            fi
-
-            echo "🔁 Tentative $i/3 échouée, attente..."
-            sleep 5
-          done
-          echo "❌ Erreur : Impossible de récupérer le Token JWT après 3 essais."
-          exit 1
+          echo "🔧 Vérification et ajout des villes..."
+          sqlite3 var/test.db "INSERT INTO ville (id_ville, code_postale, nom_commune) VALUES (2, '75001', 'Paris') ON CONFLICT(id_ville) DO NOTHING;"
+          echo "✅ Villes vérifiées et ajoutées"
+          
+      - name: Debug Database Content (Check Roles & Villes)
+        run: |
+          echo "🔍 Contenu des rôles et villes après insertion"
+          sqlite3 var/test.db "SELECT * FROM role;"
+          sqlite3 var/test.db "SELECT * FROM ville;"
+      - name: Load test data (fixtures)
+        run: php bin/console doctrine:fixtures:load --no-interaction --env=test || echo "No fixtures available"
 
       - name: Run PHPUnit tests
-        run: |
-          echo "🚀 Exécution des tests PHPUnit"
-          vendor/bin/phpunit --coverage-text || exit 1
+        run: vendor/bin/phpunit --coverage-text
