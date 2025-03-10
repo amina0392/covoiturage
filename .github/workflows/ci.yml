@@ -71,21 +71,28 @@ jobs:
 
       - name: Start Symfony Server
         run: |
-          echo "🚀 Démarrage du serveur PHP intégré..."
-          nohup php -S 127.0.0.1:8000 -t public > symfony.log 2>&1 &
+          echo "🚀 Démarrage du serveur Symfony..."
+          symfony server:start -d
 
       - name: Wait for Server to Start
         run: |
           echo "🕒 Attente de la disponibilité du serveur..."
-          for i in {1..30}; do
+          for i in {1..45}; do
             curl -s http://127.0.0.1:8000/api/healthcheck && break
             echo "⏳ Serveur non prêt, attente..."
             sleep 2
           done
+          echo "✅ Serveur Symfony prêt."
 
       - name: Ensure Admin User Exists
         run: |
           echo "🔍 Vérification et création de l'admin jean.dupont@example.com"
+          TABLE_EXISTS=$(sqlite3 var/test.db "SELECT name FROM sqlite_master WHERE type='table' AND name='utilisateur';")
+          if [ -z "$TABLE_EXISTS" ]; then
+            echo "❌ Table utilisateur introuvable ! Base vide ?"
+            exit 1
+          fi
+
           EXISTS=$(sqlite3 var/test.db "SELECT COUNT(*) FROM utilisateur WHERE email='jean.dupont@example.com';")
           if [ "$EXISTS" -eq "0" ]; then
             echo "🔹 L'admin n'existe pas, création..."
@@ -104,21 +111,24 @@ jobs:
       - name: Récupérer le Token JWT de jean.dupont@example.com
         run: |
           echo "🔑 Récupération du Token JWT pour jean.dupont@example.com"
-          RESPONSE=$(curl -s -X POST http://127.0.0.1:8000/api/login_check -H "Content-Type: application/json" -d '{"email": "jean.dupont@example.com", "password": "password123"}')
-          echo "Réponse JWT : $RESPONSE"
+          for i in {1..3}; do
+            RESPONSE=$(curl -s -X POST http://127.0.0.1:8000/api/login_check -H "Content-Type: application/json" -d '{"email": "jean.dupont@example.com", "password": "password123"}')
+            echo "Réponse JWT : $RESPONSE"
 
-          if [[ "$RESPONSE" == *"500 Internal Server Error"* ]]; then
-            echo "❌ Erreur : Le serveur Symfony n'est pas prêt ou la base est vide."
-            exit 1
-          fi
+            if [[ "$RESPONSE" != *"Invalid credentials"* && "$RESPONSE" != *"500 Internal Server Error"* ]]; then
+              TOKEN=$(echo $RESPONSE | jq -r '.token')
+              if [ "$TOKEN" != "null" ] && [ -n "$TOKEN" ]; then
+                echo "TOKEN_JWT=$TOKEN" >> $GITHUB_ENV
+                echo "✅ Token récupéré avec succès"
+                exit 0
+              fi
+            fi
 
-          TOKEN=$(echo $RESPONSE | jq -r '.token')
-          if [ "$TOKEN" == "null" ] || [ -z "$TOKEN" ]; then
-            echo "❌ Erreur : Impossible de récupérer le Token JWT pour jean.dupont@example.com."
-            exit 1
-          fi
-          echo "TOKEN_JWT=$TOKEN" >> $GITHUB_ENV
-          echo "✅ Token récupéré avec succès"
+            echo "🔁 Tentative $i/3 échouée, attente..."
+            sleep 5
+          done
+          echo "❌ Erreur : Impossible de récupérer le Token JWT après 3 essais."
+          exit 1
 
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --coverage-text
