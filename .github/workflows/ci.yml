@@ -32,7 +32,8 @@ jobs:
           touch var/test.db
           chmod 777 var/test.db
           ls -lah var
-            - name: Clear cache and remove vendor
+
+      - name: Clear cache and remove vendor
         run: rm -rf vendor/ composer.lock
 
       - name: Clear Composer Cache
@@ -44,11 +45,10 @@ jobs:
       - name: Optimize Composer Autoload
         run: composer dump-autoload --optimize --classmap-authoritative
 
-      - name: Debug PHPUnit Installation
-        run: ls -lah vendor/phpunit/phpunit/
-
-      - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+      - name: Debug Composer and PHPUnit Installation
+        run: |
+          composer diagnose
+          ls -lah vendor/phpunit/phpunit/
 
       - name: Configure JWT keys
         run: |
@@ -85,8 +85,8 @@ jobs:
 
       - name: Start Symfony Server
         run: |
-          echo "🚀 Démarrage du serveur Symfony..."
-          symfony server:start -d
+          echo "🚀 Démarrage du serveur PHP intégré..."
+          php -S 127.0.0.1:8000 -t public > symfony.log 2>&1 &
 
       - name: Wait for Server to Start
         run: |
